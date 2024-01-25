@@ -13,9 +13,15 @@ export function getSessionTokensKey(userId: string): string {
   return `${SESSION_TOKENS_PREFIX}${userId}`;
 }
 
-async function addUserSession(userId: User["id"], sessionToken: string): Promise<void> {
+async function addUserSession(
+  userId: User["id"],
+  sessionToken: string,
+  expiresIn: number
+): Promise<void> {
   const sessionKey = getSessionTokensKey(userId);
-  await redis.sadd(sessionKey, sessionToken);
+  const score = Math.floor(Date.now() / 1000) + expiresIn; // Current time + expiration time in seconds
+  await redis.zadd(sessionKey, score.toString(), sessionToken);
+  await redis.expire(sessionKey, expiresIn);
 }
 
 async function deleteSessionToken(args: {
@@ -23,12 +29,21 @@ async function deleteSessionToken(args: {
   sessionToken: string;
 }): Promise<void> {
   const sessionKey = getSessionTokensKey(args.userId);
-  await redis.srem(sessionKey, args.sessionToken);
+  await redis.zrem(sessionKey, args.sessionToken);
 }
 
 async function getSessionToken(userId: User["id"], sessionToken: string): Promise<boolean> {
   const sessionKey = getSessionTokensKey(userId);
-  return (await redis.sismember(sessionKey, sessionToken)) === 1;
+  const score = await redis.zscore(sessionKey, sessionToken);
+  const currentTimestamp = Math.floor(Date.now() / 1000);
+  if (score !== null && parseInt(score, 10) > currentTimestamp) {
+    // Token is valid and not expired
+    return true;
+  }
+
+  // Token is either not found or expired, remove it if it exists
+  await redis.zrem(sessionKey, sessionToken);
+  return false;
 }
 
 async function generateSessionToken(userId: string): Promise<string> {
@@ -88,7 +103,7 @@ export const authService = {
 
       const expiresIn = 60 * 60 * 24 * 5; // 5 days in seconds
       const sessionToken = await generateSessionToken(userInfo.id);
-      await addUserSession(userInfo.id, sessionToken);
+      await addUserSession(userInfo.id, sessionToken, expiresIn);
 
       this.createSecureCookie({
         headers,
