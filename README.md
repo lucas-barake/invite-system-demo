@@ -1,4 +1,4 @@
-# Installation Guide
+# Development Guide
 
 ## Prerequisites:
 

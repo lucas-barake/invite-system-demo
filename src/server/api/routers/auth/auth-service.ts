@@ -95,7 +95,6 @@ export const authService = {
   async validateSessionToken(sessionToken: string): Promise<User & { sessionToken: string }> {
     // Decode the session token from the cookies
     const decodedSessionToken = decodeURIComponent(sessionToken);
-    console.log({ decodedSessionToken });
     // Use the decoded token to retrieve the session from Redis
     const user = await verifySessionToken(decodedSessionToken);
     if (user === null) {

@@ -9,7 +9,6 @@ import { headers } from "next/headers";
 import { appRouter, type AppRouter } from "@/server/api/root";
 import { type TRPCContext } from "@/server/api/trpc";
 import { transformer } from "./shared";
-import { db } from "@/server/database";
 
 /**
  * This wraps the `createTRPCContext` helper and provides the required context for the tRPC API when
@@ -18,10 +17,8 @@ import { db } from "@/server/database";
 const createContext = (): Partial<TRPCContext> => {
   const heads = new Headers(headers());
   heads.set("x-trpc-source", "rsc");
-  console.log({ heads });
 
   return {
-    db,
     headers: heads,
   };
 };

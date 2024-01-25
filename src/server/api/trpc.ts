@@ -9,7 +9,6 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
-import { db } from "@/server/database";
 import { type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { authService } from "@/server/api/routers/auth/auth-service";
@@ -29,7 +28,6 @@ import { authService } from "@/server/api/routers/auth/auth-service";
 export const createTRPCContext = async (opts: { headers: Headers; req: NextRequest }) => {
   return {
     ...opts,
-    db,
   };
 };
 export type TRPCContext = Awaited<ReturnType<typeof createTRPCContext>>;

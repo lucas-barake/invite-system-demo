@@ -13,7 +13,6 @@ export const authRouter = createTRPCRouter({
     )
     .mutation(async ({ input, ctx }) => {
       const { sessionToken, userInfo, expiresIn } = await authService.login(input.accessToken);
-      console.log({ sessionToken });
 
       const secure = env.NODE_ENV === "production" ? "Secure;" : "";
       const expires = `Expires=${new Date(Date.now() + expiresIn).toUTCString()};`;
