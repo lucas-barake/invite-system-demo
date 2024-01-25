@@ -1,8 +1,12 @@
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
 import { z } from "zod";
-import { authService } from "@/server/api/routers/auth/auth-service";
-import { env } from "@/env";
+import {
+  authService,
+  SESSION_TOKEN_COOKIE_KEY,
+  USER_ID_COOKIE_KEY,
+} from "@/server/api/routers/auth/auth-service";
 import { TRPCError } from "@trpc/server";
+import { type User } from "@/server/api/repositories/user-repository";
 
 export const authRouter = createTRPCRouter({
   login: publicProcedure
@@ -11,39 +15,36 @@ export const authRouter = createTRPCRouter({
         accessToken: z.string(),
       })
     )
-    .mutation(async ({ input, ctx }) => {
-      const { sessionToken, userInfo, expiresIn } = await authService.login(input.accessToken);
-
-      const secure = env.NODE_ENV === "production" ? "Secure;" : "";
-      const expires = `Expires=${new Date(Date.now() + expiresIn).toUTCString()};`;
-      ctx.headers.set(
-        "Set-Cookie",
-        `session_token=${sessionToken}; HttpOnly; Path=/; SameSite=Lax; ${secure} ${expires}`
-      );
-
-      return userInfo;
+    .mutation(async ({ input, ctx }): Promise<User> => {
+      return authService.login(input.accessToken, ctx.headers);
     }),
 
-  me: protectedProcedure.query(async ({ ctx }) => {
-    const userInfo = await authService.getUserInfo(ctx.session.id);
-
-    if (userInfo === null) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to get user info",
-      });
-    }
-
-    return userInfo;
+  me: protectedProcedure.query(async ({ ctx }): Promise<User> => {
+    return {
+      email: ctx.session.email,
+      id: ctx.session.id,
+      imageUrl: ctx.session.imageUrl,
+      name: ctx.session.name,
+    };
   }),
 
   logout: protectedProcedure.mutation(async ({ ctx }) => {
     try {
-      await authService.logout(ctx.session.sessionToken);
-      ctx.headers.set(
-        "Set-Cookie",
-        `session_token=; HttpOnly; Path=/; SameSite=Lax; Expires=${new Date(0).toUTCString()}`
-      );
+      await authService.logout({
+        sessionToken: ctx.session.sessionToken,
+        userId: ctx.session.id,
+        headers: ctx.headers,
+      });
+
+      authService.deleteCookie({
+        headers: ctx.headers,
+        name: SESSION_TOKEN_COOKIE_KEY,
+      });
+
+      authService.deleteCookie({
+        headers: ctx.headers,
+        name: USER_ID_COOKIE_KEY,
+      });
     } catch (error: unknown) {
       console.log("Failed to logout", error);
       throw new TRPCError({

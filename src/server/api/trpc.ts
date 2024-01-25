@@ -11,7 +11,12 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 import { type NextRequest } from "next/server";
 import { cookies } from "next/headers";
-import { authService } from "@/server/api/routers/auth/auth-service";
+import {
+  authService,
+  SESSION_TOKEN_COOKIE_KEY,
+  USER_ID_COOKIE_KEY,
+} from "@/server/api/routers/auth/auth-service";
+import { type User } from "@/server/api/repositories/user-repository";
 
 /**
  * 1. CONTEXT
@@ -76,8 +81,9 @@ export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
 
 export const protectedProcedure = t.procedure.use(async (opts) => {
-  const sessionToken = cookies().get("session_token");
-  if (sessionToken === undefined) {
+  const encodedSessionToken = cookies().get(SESSION_TOKEN_COOKIE_KEY)?.value;
+  const userId = cookies().get(USER_ID_COOKIE_KEY)?.value;
+  if (encodedSessionToken === undefined || userId === undefined) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "You must be logged in to perform this action",
@@ -85,22 +91,38 @@ export const protectedProcedure = t.procedure.use(async (opts) => {
   }
 
   try {
-    const user = await authService.validateSessionToken(sessionToken.value);
+    const result = await authService.validateSessionToken({
+      encodedSessionToken,
+      userId,
+    });
+
+    if (!result.success) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "You must be logged in to perform this action",
+      });
+    }
+
+    if (result.userInfo === null) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to retrieve user info",
+      });
+    }
 
     return await opts.next({
       ctx: {
         ...opts.ctx,
-        session: user,
+        session: {
+          email: result.userInfo.email,
+          id: result.userInfo.id,
+          imageUrl: result.userInfo.imageUrl,
+          name: result.userInfo.name,
+          sessionToken: result.sessionToken,
+        } satisfies User & { sessionToken: string },
       },
     });
   } catch (error: unknown) {
-    if (error instanceof Error) {
-      // the session token is invalid
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: error.message,
-      });
-    }
     if (error instanceof TRPCError) {
       throw error;
     }

@@ -3,6 +3,33 @@ import { TRPCError } from "@trpc/server";
 import { type User, userRepository } from "@/server/api/repositories/user-repository";
 import { redis } from "@/server/redis";
 import argon2 from "argon2";
+import { env } from "@/env";
+
+export const SESSION_TOKEN_COOKIE_KEY = "x-session-token";
+export const USER_ID_COOKIE_KEY = "x-user-id";
+
+export const SESSION_TOKENS_PREFIX = "session-tokens:";
+export function getSessionTokensKey(userId: string): string {
+  return `${SESSION_TOKENS_PREFIX}${userId}`;
+}
+
+async function addUserSession(userId: User["id"], sessionToken: string): Promise<void> {
+  const sessionKey = getSessionTokensKey(userId);
+  await redis.sadd(sessionKey, sessionToken);
+}
+
+async function deleteSessionToken(args: {
+  userId: User["id"];
+  sessionToken: string;
+}): Promise<void> {
+  const sessionKey = getSessionTokensKey(args.userId);
+  await redis.srem(sessionKey, args.sessionToken);
+}
+
+async function getSessionToken(userId: User["id"], sessionToken: string): Promise<boolean> {
+  const sessionKey = getSessionTokensKey(userId);
+  return (await redis.sismember(sessionKey, sessionToken)) === 1;
+}
 
 async function generateSessionToken(userId: string): Promise<string> {
   const rawToken = `${userId}-${Date.now()}-${Math.random()}`;
@@ -10,26 +37,27 @@ async function generateSessionToken(userId: string): Promise<string> {
   return hashedToken;
 }
 
-function stringifyUser(user: User): string {
-  return JSON.stringify(user);
-}
-
-function parseUser(userString: string): User {
-  return JSON.parse(userString) as User;
-}
-
-async function verifySessionToken(sessionToken: string): Promise<User | null> {
-  const userString = await redis.get(sessionToken);
-  if (userString === null) return null;
-  return parseUser(userString);
-}
-
 export const authService = {
-  async login(accessToken: string): Promise<{
-    sessionToken: string;
-    userInfo: User;
+  createSecureCookie(args: {
+    headers: Headers;
     expiresIn: number;
-  }> {
+    name: string;
+    value: string;
+  }): void {
+    const secure = env.NODE_ENV === "production" ? "Secure;" : "";
+    const cookie = `${args.name}=${args.value}; HttpOnly; Path=/; SameSite=Lax; ${secure} Expires=${new Date(
+      Date.now() + args.expiresIn
+    ).toUTCString()}`;
+    args.headers.append("Set-Cookie", cookie);
+  },
+
+  deleteCookie(args: { headers: Headers; name: string }): void {
+    const secure = env.NODE_ENV === "production" ? "Secure;" : "";
+    const cookie = `${args.name}=; HttpOnly; Path=/; SameSite=Lax; ${secure} Expires=${new Date(0).toUTCString()}`;
+    args.headers.append("Set-Cookie", cookie);
+  },
+
+  async login(accessToken: string, headers: Headers): Promise<User> {
     try {
       const verifiedToken = await admin.auth().verifyIdToken(accessToken);
       if (verifiedToken.email === undefined) {
@@ -40,7 +68,7 @@ export const authService = {
       }
 
       const name = typeof verifiedToken.name === "string" ? verifiedToken.name : null;
-      const userInfo = await userRepository.upsertUser(verifiedToken.email, {
+      const userInfo = await userRepository.upsertUser({
         onCreate: {
           email: verifiedToken.email,
           imageUrl: verifiedToken.picture ?? null,
@@ -60,13 +88,23 @@ export const authService = {
 
       const expiresIn = 60 * 60 * 24 * 5; // 5 days in seconds
       const sessionToken = await generateSessionToken(userInfo.id);
-      await redis.set(sessionToken, stringifyUser(userInfo), "EX", expiresIn);
+      await addUserSession(userInfo.id, sessionToken);
 
-      return {
-        sessionToken: encodeURIComponent(sessionToken),
-        userInfo,
+      this.createSecureCookie({
+        headers,
         expiresIn,
-      };
+        name: SESSION_TOKEN_COOKIE_KEY,
+        value: encodeURIComponent(sessionToken),
+      });
+
+      this.createSecureCookie({
+        headers,
+        expiresIn,
+        name: USER_ID_COOKIE_KEY,
+        value: userInfo.id,
+      });
+
+      return userInfo;
     } catch (error: unknown) {
       if (error instanceof Error) {
         throw new TRPCError({
@@ -88,23 +126,49 @@ export const authService = {
     return userRepository.getUserById(id);
   },
 
-  async logout(sessionToken: string): Promise<void> {
-    await redis.del(sessionToken);
+  async logout(args: {
+    userId: User["id"];
+    sessionToken: string;
+    headers: Headers;
+  }): Promise<void> {
+    await deleteSessionToken({
+      userId: args.userId,
+      sessionToken: args.sessionToken,
+    });
+
+    this.deleteCookie({
+      headers: args.headers,
+      name: SESSION_TOKEN_COOKIE_KEY,
+    });
+
+    this.deleteCookie({
+      headers: args.headers,
+      name: USER_ID_COOKIE_KEY,
+    });
   },
 
-  async validateSessionToken(sessionToken: string): Promise<User & { sessionToken: string }> {
-    // Decode the session token from the cookies
-    const decodedSessionToken = decodeURIComponent(sessionToken);
-    // Use the decoded token to retrieve the session from Redis
-    const user = await verifySessionToken(decodedSessionToken);
-    if (user === null) {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "Invalid session token",
-      });
+  async validateSessionToken(args: { encodedSessionToken: string; userId: User["id"] }): Promise<
+    | {
+        success: true;
+        userInfo: User | null;
+        sessionToken: string;
+      }
+    | {
+        success: false;
+      }
+  > {
+    const decodedSessionToken = decodeURIComponent(args.encodedSessionToken);
+    const exists = await getSessionToken(args.userId, decodedSessionToken);
+
+    if (!exists) {
+      return {
+        success: false,
+      };
     }
+
     return {
-      ...user,
+      success: true,
+      userInfo: await this.getUserInfo(args.userId),
       sessionToken: decodedSessionToken,
     };
   },

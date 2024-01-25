@@ -15,7 +15,7 @@ services:
   redis:
     container_name: firebase-auth-cache
     image: redis
-    restart: always
+    restart: no
     ports:
       - "6379:6379"
 
