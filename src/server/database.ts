@@ -2,6 +2,7 @@ import { Pool } from "pg";
 import { Kysely, PostgresDialect } from "kysely";
 import { type DB } from "kysely-codegen";
 import { env } from "@/env";
+import pc from "picocolors";
 
 const dialect = new PostgresDialect({
   pool: new Pool({
@@ -18,11 +19,12 @@ export const db = new Kysely<DB>({
             const param = event.query.parameters[Number(index) - 1];
             return param !== null && param !== undefined && typeof param.toString === "function"
               ? // eslint-disable-next-line @typescript-eslint/no-base-to-string
-                param.toString()
-              : "UNKNOWN_PARAM";
+                pc.green(param.toString())
+              : pc.red("UNKNOWN");
           });
 
-          console.debug(`[Kysely (${event.queryDurationMillis}ms)]\n${formattedSql}`);
+          const kyselyLabel = pc.yellow(`[Kysely (${event.queryDurationMillis}ms)]`);
+          console.debug(`${kyselyLabel} ${formattedSql}`);
         }
       : undefined,
 });
