@@ -1,28 +1,55 @@
-# Create T3 App
+# Installation Guide
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+## Prerequisites:
 
-## What's next? How do I make an app with this?
+Before proceeding with the installation, please make sure you have the following software installed on your machine:
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- [Node.js](https://nodejs.org/en).
+- [nvm](https://github.com/nvm-sh/nvm)
+- ESLint and Prettier extensions in your preferred editor.
+- [pnpm](https://pnpm.io/) installed `npm i -g pnpm`
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## Installation Steps
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+1. Set your Node.js version to the project's version
 
-## Learn More
+```bash
+nvm use
+```
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+Running this command will instruct [nvm](https://github.com/nvm-sh/nvm) to switch to the Node.js version specified in
+the [nvmrc](./.nvmrc) file.
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+2. Install the dependencies:
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+```bash
+pnpm install
+```
 
-## How do I deploy this?
+3. Set up your environment variables
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+Copy the template found in the `.env.example` file over to a new `.env` file.
+
+```bash
+cp .env.example .env
+```
+
+Replace the values in the `.env` file with your own configuration.
+
+4. Set up your database and cache instances:
+
+```bash
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+5. Run the migrations:
+
+```bash
+pnpm dlx prisma db push
+```
+
+6. Start the server:
+
+```bash
+pnpm run dev
+```
