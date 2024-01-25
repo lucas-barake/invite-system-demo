@@ -32,6 +32,7 @@ export const authRouter = createTRPCRouter({
         headers: ctx.headers,
       });
     } catch (error: unknown) {
+      // TODO: Logging
       console.log("Failed to logout", error);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",

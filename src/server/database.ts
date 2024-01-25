@@ -23,8 +23,8 @@ export const db = new Kysely<DB>({
               : pc.red("UNKNOWN");
           });
 
-          const kyselyLabel = pc.yellow(`[Kysely (${event.queryDurationMillis}ms)]`);
-          console.debug(`${kyselyLabel} ${formattedSql}`);
+          const kyselyLabel = pc.yellow(`[Kysely (${event.queryDurationMillis.toFixed(2)}ms)]`);
+          console.debug(`\n${kyselyLabel}\n${formattedSql}\n`);
         }
       : undefined,
 });

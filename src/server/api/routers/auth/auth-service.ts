@@ -23,8 +23,34 @@ async function addUserSession(
 ): Promise<void> {
   const sessionKey = getSessionTokensKey(userId);
   const score = Math.floor(Date.now() / 1000) + expiresIn; // Current time + expiration time in seconds
-  await redis.zadd(sessionKey, score.toString(), sessionToken);
-  await redis.expire(sessionKey, expiresIn);
+
+  const pipeline = redis.multi();
+  pipeline.zadd(sessionKey, score.toString(), sessionToken);
+  pipeline.zcount(sessionKey, "-inf", "+inf");
+  pipeline.expire(sessionKey, expiresIn);
+
+  const results = await pipeline.exec();
+  const sessionTokensCount = results?.[1]?.[1];
+  if (
+    !Array.isArray(results) ||
+    results.some((result) => result[0] !== null) ||
+    typeof sessionTokensCount !== "number"
+  ) {
+    // TODO: Logging
+    console.log({ results, sessionTokensCount });
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Failed to add user session",
+    });
+  }
+
+  const SESSIONS_TOKEN_LIMIT = 8;
+  if (sessionTokensCount > SESSIONS_TOKEN_LIMIT) {
+    const tokensToRemove = sessionTokensCount - 8;
+    pipeline.zremrangebyrank(sessionKey, 0, tokensToRemove - 1);
+  }
+
+  await pipeline.exec();
 }
 
 async function deleteSessionToken(args: {
@@ -35,7 +61,10 @@ async function deleteSessionToken(args: {
   await redis.zrem(sessionKey, args.sessionToken);
 }
 
-async function getSessionToken(userId: User["id"], sessionToken: string): Promise<boolean> {
+async function checkSessionTokenValidity(
+  userId: User["id"],
+  sessionToken: string
+): Promise<boolean> {
   const sessionKey = getSessionTokensKey(userId);
   const score = await redis.zscore(sessionKey, sessionToken);
   const currentTimestamp = Math.floor(Date.now() / 1000);
@@ -109,9 +138,8 @@ export const authService = {
           message: error.message,
         });
       }
-      if (error instanceof TRPCError) {
-        throw error;
-      }
+      if (error instanceof TRPCError) throw error;
+      // TODO: Logging
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to login",
@@ -151,9 +179,9 @@ export const authService = {
       }
   > {
     const decodedSessionToken = decodeURIComponent(args.encodedSessionToken);
-    const exists = await getSessionToken(args.userId, decodedSessionToken);
+    const isSessionTokenValid = await checkSessionTokenValidity(args.userId, decodedSessionToken);
 
-    if (!exists) {
+    if (!isSessionTokenValid) {
       return {
         success: false,
       };
