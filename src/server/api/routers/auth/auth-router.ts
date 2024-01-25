@@ -1,10 +1,6 @@
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
 import { z } from "zod";
-import {
-  authService,
-  SESSION_TOKEN_COOKIE_KEY,
-  USER_ID_COOKIE_KEY,
-} from "@/server/api/routers/auth/auth-service";
+import { authService } from "@/server/api/routers/auth/auth-service";
 import { TRPCError } from "@trpc/server";
 import { type User } from "@/server/api/repositories/user-repository";
 
@@ -34,16 +30,6 @@ export const authRouter = createTRPCRouter({
         sessionToken: ctx.session.sessionToken,
         userId: ctx.session.id,
         headers: ctx.headers,
-      });
-
-      authService.deleteCookie({
-        headers: ctx.headers,
-        name: SESSION_TOKEN_COOKIE_KEY,
-      });
-
-      authService.deleteCookie({
-        headers: ctx.headers,
-        name: USER_ID_COOKIE_KEY,
       });
     } catch (error: unknown) {
       console.log("Failed to logout", error);

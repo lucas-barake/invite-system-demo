@@ -137,10 +137,6 @@ export const authService = {
     }
   },
 
-  async getUserInfo(id: User["id"]): Promise<User | null> {
-    return userRepository.getUserById(id);
-  },
-
   async logout(args: {
     userId: User["id"];
     sessionToken: string;
@@ -183,7 +179,7 @@ export const authService = {
 
     return {
       success: true,
-      userInfo: await this.getUserInfo(args.userId),
+      userInfo: await userRepository.getUserById(args.userId),
       sessionToken: decodedSessionToken,
     };
   },
