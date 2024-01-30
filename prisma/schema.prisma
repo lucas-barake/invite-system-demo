@@ -11,25 +11,42 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid()
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
-  name      String?
-  email     String   @unique
-  imageUrl  String?
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid()
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
+  name           String?
+  email          String        @unique
+  imageUrl       String?
+  groups         Group[]
+  groupsAsMember GroupMember[]
 
   @@index([email])
   @@map("users")
 }
 
 model Group {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid()
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid()
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
   title     String
   todos     Todo[]
+  owner     User          @relation(fields: [ownerId], references: [id])
+  ownerId   String        @map("owner_id") @db.Uuid()
+  members   GroupMember[]
 
-  @@map("todo_lists")
+  @@map("groups")
+}
+
+model GroupMember {
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @map("user_id") @db.Uuid()
+  group     Group    @relation(fields: [groupId], references: [id])
+  groupId   String   @map("group_id") @db.Uuid()
+
+  @@id([userId, groupId])
+  @@map("group_members")
 }
 
 model Todo {
