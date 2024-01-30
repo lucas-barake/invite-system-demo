@@ -1,19 +1,19 @@
 version: "3.8"
 services:
   db:
-    container_name: firebase-auth-db
+    container_name: invite-system-db
     image: postgres
     restart: no
     environment:
-      POSTGRES_USER: firebase
-      POSTGRES_PASSWORD: firebase
-      POSTGRES_DB: firebase
+      POSTGRES_USER: db
+      POSTGRES_PASSWORD: db
+      POSTGRES_DB: invite_system
     ports:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
   redis:
-    container_name: firebase-auth-cache
+    container_name: invite-system-redis
     image: redis
     restart: no
     ports:

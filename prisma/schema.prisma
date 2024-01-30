@@ -21,3 +21,25 @@ model User {
   @@index([email])
   @@map("users")
 }
+
+model Group {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid()
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  title     String
+  todos     Todo[]
+
+  @@map("todo_lists")
+}
+
+model Todo {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid()
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+  title     String
+  done      DateTime?
+  group     Group     @relation(fields: [groupId], references: [id])
+  groupId   String    @map("group_id") @db.Uuid()
+
+  @@map("todos")
+}
