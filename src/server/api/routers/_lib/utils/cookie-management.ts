@@ -2,13 +2,14 @@ import { env } from "@/env";
 
 export function createSecureCookie(args: {
   headers: Headers;
-  expiresIn: number;
+  expiresInSeconds: number;
   name: string;
   value: string;
 }): void {
   const secure = env.NODE_ENV === "production" ? "Secure;" : "";
+  const expiresInMs = args.expiresInSeconds * 1000;
   const cookie = `${args.name}=${args.value}; HttpOnly; Path=/; SameSite=Lax; ${secure} Expires=${new Date(
-    Date.now() + args.expiresIn
+    Date.now() + expiresInMs
   ).toUTCString()}`;
   args.headers.append("Set-Cookie", cookie);
 }

@@ -1,26 +1,39 @@
-import { AuthScreen } from "src/app/_lib/auth-screen";
+"use client";
+
 import React from "react";
-import { api } from "@/trpc/server";
-import { UserStoreInitializer } from "@/app/_lib/user-store-initializer";
-import { type User } from "@/server/api/repositories/user-repository";
-import { unstable_noStore } from "next/cache";
+import { CreateGroupModal } from "@/app/_lib/create-group-modal";
+import { Button } from "@/components/ui/button";
+import { api } from "@/trpc/react";
+import { Header } from "@/app/_lib/header";
+import { GroupCard, GroupCardSkeleton } from "@/app/_lib/group-card/group-card";
 
-async function getMe(): Promise<User | null> {
-  try {
-    return await api.auth.me.query();
-  } catch {
-    return null;
-  }
-}
-
-const Home: React.FC = async () => {
-  unstable_noStore();
-  const user = await getMe();
+const Home: React.FC = () => {
+  const [openCreateGroupModal, setOpenCreateGroupModal] = React.useState(false);
+  const todosQuery = api.groups.getAll.useQuery(undefined, {
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
   return (
     <main>
-      <UserStoreInitializer user={user} />
-      <AuthScreen />
+      <Header />
+
+      <CreateGroupModal open={openCreateGroupModal} onOpenChange={setOpenCreateGroupModal} />
+
+      <div className="px-12 py-4">
+        <Button
+          onClick={() => {
+            setOpenCreateGroupModal(true);
+          }}
+        >
+          Create Group
+        </Button>
+
+        <div className="mt-4 grid grid-cols-4 gap-4">
+          {todosQuery.data !== undefined && !todosQuery.isFetching
+            ? todosQuery.data.map((group) => <GroupCard group={group} key={group.id} />)
+            : Array.from({ length: 4 }).map((_, i) => <GroupCardSkeleton key={i} />)}
+        </div>
+      </div>
     </main>
   );
 };

@@ -13,7 +13,10 @@ export const UserStoreInitializer: React.FC<Props> = ({ user }) => {
 
   if (!initialized.current) {
     initialized.current = true;
-    useSession.setState({ data: user });
+    useSession.setState({
+      data: user,
+      status: user !== null ? "authenticated" : "unauthenticated",
+    });
   }
 
   return null;

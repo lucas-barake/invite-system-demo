@@ -12,11 +12,6 @@ export const AuthScreen: React.FC = () => {
       session.update(data);
     },
   });
-  const logoutMutation = api.auth.logout.useMutation({
-    onSuccess() {
-      session.update(null);
-    },
-  });
 
   async function handleSignIn(): Promise<void> {
     try {
@@ -33,32 +28,18 @@ export const AuthScreen: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center gap-2 p-24">
-      {session.data !== null && (
-        <code className="text-center">{JSON.stringify(session.data, null, 2)}</code>
-      )}
-
-      {session.data === null && (
-        <button
-          type="button"
-          className="rounded-md bg-indigo-500 px-4 py-2 text-white shadow disabled:opacity-50"
-          onClick={handleSignIn}
-        >
-          {loginMutation.isLoading ? "Loading..." : "Sign in with Google"}
-        </button>
-      )}
-
-      {session.data !== null && (
-        <button
-          type="button"
-          className="rounded-md bg-indigo-500 px-4 py-2 text-white shadow disabled:opacity-50"
-          onClick={() => {
-            logoutMutation.mutate();
-          }}
-          disabled={logoutMutation.isLoading}
-        >
-          {logoutMutation.isLoading ? "Loading..." : "Sign out"}
-        </button>
-      )}
+      <button
+        type="button"
+        className="rounded-md bg-indigo-500 px-4 py-2 text-white shadow disabled:opacity-50"
+        onClick={handleSignIn}
+        disabled={
+          loginMutation.isLoading ||
+          session.status === "loading" ||
+          session.status === "authenticated"
+        }
+      >
+        {loginMutation.isLoading ? "Loading..." : "Sign in with Google"}
+      </button>
     </div>
   );
 };

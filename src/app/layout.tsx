@@ -4,6 +4,12 @@ import { Inter } from "next/font/google";
 
 import { TRPCReactProvider } from "@/trpc/react";
 import React from "react";
+import { unstable_noStore } from "next/cache";
+import { api } from "@/trpc/server";
+import { type User } from "@/server/api/repositories/user-repository";
+import { UserStoreInitializer } from "@/app/_lib/user-store-initializer";
+import { AuthGuard } from "@/app/_lib/auth-guard/auth-guard";
+import { cn } from "@/lib/cn";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -20,11 +26,25 @@ type Props = {
   children: React.ReactNode;
 };
 
-const RootLayout: React.FC<Props> = ({ children }) => {
+async function getMe(): Promise<User | null> {
+  try {
+    return await api.auth.me.query();
+  } catch {
+    return null;
+  }
+}
+
+const RootLayout: React.FC<Props> = async ({ children }) => {
+  unstable_noStore();
+  const user = await getMe();
+
   return (
     <html lang="en">
-      <body className={`font-sans ${inter.variable}`}>
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+      <body className={cn("font-sans bg-background", inter.variable)}>
+        <TRPCReactProvider>
+          <UserStoreInitializer user={user} />
+          <AuthGuard>{children}</AuthGuard>
+        </TRPCReactProvider>
       </body>
     </html>
   );

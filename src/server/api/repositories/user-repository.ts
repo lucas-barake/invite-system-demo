@@ -26,11 +26,16 @@ export const userRepository = {
     );
   },
 
-  async getUserById(id: User["id"]): Promise<User | null> {
+  async getCachedUserInfo(id: User["id"]): Promise<User | null> {
     const userKey = getUserInfoKey(id);
     const cachedUserInfo = await redis.get(userKey);
+    return cachedUserInfo !== null ? (JSON.parse(cachedUserInfo) as User) : null;
+  },
+
+  async getUserById(id: User["id"]): Promise<User | null> {
+    const cachedUserInfo = await this.getCachedUserInfo(id);
     if (cachedUserInfo !== null) {
-      return JSON.parse(cachedUserInfo) as User;
+      return cachedUserInfo;
     }
     const userQuery = await db
       .selectFrom("users")

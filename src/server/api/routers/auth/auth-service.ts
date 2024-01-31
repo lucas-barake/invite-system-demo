@@ -37,7 +37,6 @@ async function addUserSession(
     typeof sessionTokensCount !== "number"
   ) {
     // TODO: Logging
-    console.log({ results, sessionTokensCount });
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: "Failed to add user session",
@@ -118,14 +117,14 @@ export const authService = {
 
       createSecureCookie({
         headers,
-        expiresIn,
+        expiresInSeconds: expiresIn,
         name: SESSION_TOKEN_COOKIE_KEY,
         value: encodeURIComponent(sessionToken),
       });
 
       createSecureCookie({
         headers,
-        expiresIn,
+        expiresInSeconds: expiresIn,
         name: USER_ID_COOKIE_KEY,
         value: userInfo.id,
       });
