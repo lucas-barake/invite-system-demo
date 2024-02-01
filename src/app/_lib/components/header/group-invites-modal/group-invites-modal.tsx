@@ -10,7 +10,7 @@ import { cn } from "@/lib/cn";
 
 export const GroupInvitesModal: React.FC = () => {
   const [open, setOpen] = React.useState(false);
-  const pendingInvitesQuery = api.groups.getPendingInvitesForUser.useQuery(undefined, {
+  const pendingInvitesQuery = api.groupInvites.getPendingInvitesForUser.useQuery(undefined, {
     staleTime: 1000 * 60, // 1 minute
   });
   const hasPendingInvites = (pendingInvitesQuery.data?.length ?? 0) > 0;

@@ -3,10 +3,6 @@
 import React from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
-import {
-  SendGroupInviteInput,
-  type SendGroupInviteInputType,
-} from "@/server/api/routers/groups/groups.input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "@/lib/stores/session-store";
 import { type Group } from "@/server/api/routers/groups/groups.types";
@@ -18,6 +14,10 @@ import { LucideMail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import toast from "react-hot-toast";
 import { handleToastError } from "@/components/ui/styled-toaster";
+import {
+  SendGroupInviteInput,
+  type SendGroupInviteInputType,
+} from "@/server/api/routers/groups/group-invites/group-invites.input";
 
 type Props = {
   open: boolean;
@@ -44,7 +44,7 @@ export const InviteMembersModal: React.FC<Props> = ({ open, onOpenChange, group 
       })
     ),
   });
-  const sendInviteMutation = api.groups.sendGroupInvite.useMutation();
+  const sendInviteMutation = api.groupInvites.sendGroupInvite.useMutation();
 
   async function handleSubmit(data: SendGroupInviteInputType): Promise<void> {
     void toast.promise(

@@ -1,9 +1,9 @@
 import React from "react";
 import { CheckIcon, XIcon } from "lucide-react";
-import { type GroupInvite } from "@/server/api/routers/groups/groups.types";
 import { api } from "@/trpc/react";
 import toast from "react-hot-toast";
 import { handleToastError } from "@/components/ui/styled-toaster";
+import { type GroupInvite } from "@/server/api/routers/groups/group-invites/group-invites.types";
 
 type Props = {
   pendingInvite: GroupInvite;
@@ -11,18 +11,18 @@ type Props = {
 
 export const PendingInviteRow: React.FC<Props> = ({ pendingInvite }) => {
   const apiUtils = api.useUtils();
-  const acceptInvite = api.groups.acceptGroupInvite.useMutation({
+  const acceptInvite = api.groupInvites.acceptGroupInvite.useMutation({
     onSuccess() {
       void apiUtils.groups.getAllGroups.invalidate();
-      apiUtils.groups.getPendingInvitesForUser.setData(undefined, (cachedData) => {
+      apiUtils.groupInvites.getPendingInvitesForUser.setData(undefined, (cachedData) => {
         if (cachedData === undefined) return [];
         return cachedData.filter((invite) => invite.groupId !== pendingInvite.groupId);
       });
     },
   });
-  const declineInvite = api.groups.declineGroupInvite.useMutation({
+  const declineInvite = api.groupInvites.declineGroupInvite.useMutation({
     onSuccess() {
-      apiUtils.groups.getPendingInvitesForUser.setData(undefined, (cachedData) => {
+      apiUtils.groupInvites.getPendingInvitesForUser.setData(undefined, (cachedData) => {
         if (cachedData === undefined) return [];
         return cachedData.filter((invite) => invite.groupId !== pendingInvite.groupId);
       });
