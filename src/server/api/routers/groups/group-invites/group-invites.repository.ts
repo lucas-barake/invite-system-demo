@@ -106,6 +106,18 @@ class GroupInvitesRepository {
 
     return invites.map((invite) => groupInvitesMap.get(invite.group_id)!);
   }
+
+  public async getPendingInvitesForGroup(groupId: string): Promise<string[]> {
+    const currentTime = DateTime.now().toUTC().toJSDate();
+    const invites = await db
+      .selectFrom("group_invites")
+      .where("group_id", "=", groupId)
+      .where("expiration_time", ">", currentTime)
+      .select(["invitee_email", "expiration_time"])
+      .execute();
+
+    return invites.map((invite) => invite.invitee_email);
+  }
 }
 
 export const groupInvitesRepository = new GroupInvitesRepository();

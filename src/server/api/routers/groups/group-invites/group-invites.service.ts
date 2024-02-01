@@ -86,8 +86,39 @@ class GroupInvitesService {
     return result !== 0;
   }
 
+  public async removePendingInvite({
+    groupId,
+    inviteeEmail,
+    session,
+  }: {
+    groupId: string;
+    inviteeEmail: string;
+    session: User;
+  }): Promise<boolean> {
+    const groupExists = await groupsRepository.checkGroupExistence(groupId, session.id);
+    if (!groupExists) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Group not found or you are not the owner of the group",
+      });
+    }
+    const result = await groupInvitesRepository.deletePendingInvite(groupId, inviteeEmail);
+    return result !== 0;
+  }
+
   public async getPendingInvitesForUser(session: User): Promise<GroupInvite[]> {
     return groupInvitesRepository.getPendingInvitesForUser(session.email);
+  }
+
+  public async getPendingInvitesForGroup(groupId: string, session: User): Promise<string[]> {
+    const group = await groupsRepository.checkGroupExistence(groupId, session.id);
+    if (!group) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Group not found or you are not the owner of the group",
+      });
+    }
+    return groupInvitesRepository.getPendingInvitesForGroup(groupId);
   }
 }
 

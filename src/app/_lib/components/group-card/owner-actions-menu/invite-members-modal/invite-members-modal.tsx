@@ -18,6 +18,7 @@ import {
   SendGroupInviteInput,
   type SendGroupInviteInputType,
 } from "@/server/api/routers/groups/group-invites/group-invites.input";
+import { PendingInvitee } from "@/app/_lib/components/group-card/owner-actions-menu/invite-members-modal/pending-invitee";
 
 type Props = {
   open: boolean;
@@ -27,6 +28,24 @@ type Props = {
 
 export const InviteMembersModal: React.FC<Props> = ({ open, onOpenChange, group }) => {
   const session = useSession();
+
+  const apiUtils = api.useUtils();
+  const pendingInvitesQuery = api.groupInvites.getPendingInvitesForGroup.useQuery(
+    {
+      groupId: group.id,
+    },
+    {
+      staleTime: 1000 * 60 * 5,
+    }
+  );
+  const sendInviteMutation = api.groupInvites.sendGroupInvite.useMutation({
+    onSuccess() {
+      void apiUtils.groupInvites.getPendingInvitesForGroup.invalidate({
+        groupId: group.id,
+      });
+    },
+  });
+
   const form = useForm<SendGroupInviteInputType>({
     defaultValues: {
       email: "",
@@ -44,7 +63,6 @@ export const InviteMembersModal: React.FC<Props> = ({ open, onOpenChange, group 
       })
     ),
   });
-  const sendInviteMutation = api.groupInvites.sendGroupInvite.useMutation();
 
   async function handleSubmit(data: SendGroupInviteInputType): Promise<void> {
     void toast.promise(
@@ -56,7 +74,6 @@ export const InviteMembersModal: React.FC<Props> = ({ open, onOpenChange, group 
         loading: "Sending invite...",
         success() {
           form.reset();
-          onOpenChange(false);
           return "Invite sent!";
         },
         error: handleToastError,
@@ -101,6 +118,22 @@ export const InviteMembersModal: React.FC<Props> = ({ open, onOpenChange, group 
 
           <p className="text-destructive">{form.formState.errors.email?.message}</p>
         </form>
+
+        <Separator />
+
+        {pendingInvitesQuery.isFetching ? (
+          <p>Loading pending invites...</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <h3 className="font-bold">Pending Invites</h3>
+
+            <div className="flex flex-col gap-2">
+              {pendingInvitesQuery.data?.map((inviteeEmail) => (
+                <PendingInvitee inviteeEmail={inviteeEmail} key={inviteeEmail} groupId={group.id} />
+              ))}
+            </div>
+          </div>
+        )}
 
         <Separator />
 

@@ -25,7 +25,32 @@ export const groupInvitesRouter = createTRPCRouter({
       return groupInvitesService.declineGroupInvite(input.groupId, ctx.session);
     }),
 
+  removePendingInvite: protectedProcedure
+    .input(
+      z.object({
+        groupId: z.string().uuid(),
+        inviteeEmail: z.string().email(),
+      })
+    )
+    .mutation(({ input, ctx }) => {
+      return groupInvitesService.removePendingInvite({
+        groupId: input.groupId,
+        inviteeEmail: input.inviteeEmail,
+        session: ctx.session,
+      });
+    }),
+
   getPendingInvitesForUser: protectedProcedure.query(({ ctx }) => {
     return groupInvitesService.getPendingInvitesForUser(ctx.session);
   }),
+
+  getPendingInvitesForGroup: protectedProcedure
+    .input(
+      z.object({
+        groupId: z.string().uuid(),
+      })
+    )
+    .query(({ input, ctx }) => {
+      return groupInvitesService.getPendingInvitesForGroup(input.groupId, ctx.session);
+    }),
 });
