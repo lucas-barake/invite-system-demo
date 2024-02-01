@@ -43,7 +43,7 @@ model GroupMember {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
   user      User     @relation(fields: [userId], references: [id])
   userId    String   @map("user_id") @db.Uuid()
-  group     Group    @relation(fields: [groupId], references: [id])
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId   String   @map("group_id") @db.Uuid()
 
   @@id([userId, groupId])
