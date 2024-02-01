@@ -1,5 +1,5 @@
 import { PostgresError } from "@/server/api/common/enums/postgres-error.enum";
-import { userRepository } from "@/server/api/repositories/user-repository";
+import { userRepository } from "@/server/api/common/repositories/user-repository";
 import { type CreateGroupInputType } from "@/server/api/routers/groups/groups.input";
 import { type Group, type GroupInvite } from "@/server/api/routers/groups/groups.types";
 import { db } from "@/server/database";

@@ -1,12 +1,9 @@
 import { admin } from "@/server/firebase-admin";
 import { TRPCError } from "@trpc/server";
-import { type User, userRepository } from "@/server/api/repositories/user-repository";
+import { type User, userRepository } from "@/server/api/common/repositories/user-repository";
 import { redis } from "@/server/redis";
 import argon2 from "argon2";
-import {
-  createSecureCookie,
-  deleteCookie,
-} from "@/server/api/routers/_lib/utils/cookie-management";
+import { createSecureCookie, deleteCookie } from "@/server/api/common/utils/cookie-management";
 
 export const SESSION_TOKEN_COOKIE_KEY = "x-session-token";
 export const USER_ID_COOKIE_KEY = "x-user-id";

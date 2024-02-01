@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { type User } from "@/server/api/repositories/user-repository";
+import { type User } from "@/server/api/common/repositories/user-repository";
 import { useSession } from "@/lib/stores/session-store";
 
 type Props = {

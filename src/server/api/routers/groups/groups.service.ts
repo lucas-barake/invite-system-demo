@@ -1,4 +1,4 @@
-import { type User } from "@/server/api/repositories/user-repository";
+import { type User } from "@/server/api/common/repositories/user-repository";
 import {
   type AcceptGroupInviteInputType,
   type CreateGroupInputType,

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { type User } from "@/server/api/repositories/user-repository";
+import { type User } from "@/server/api/common/repositories/user-repository";
 
 export type Session = {
   data: User | null;

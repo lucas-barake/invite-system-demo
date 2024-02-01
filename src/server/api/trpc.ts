@@ -15,8 +15,8 @@ import {
   authService,
   SESSION_TOKEN_COOKIE_KEY,
   USER_ID_COOKIE_KEY,
-} from "@/server/api/routers/auth/auth-service";
-import { type User } from "@/server/api/repositories/user-repository";
+} from "@/server/api/routers/auth/auth.service";
+import { type User } from "@/server/api/common/repositories/user-repository";
 
 /**
  * 1. CONTEXT

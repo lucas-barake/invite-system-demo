@@ -6,7 +6,7 @@ import { TRPCReactProvider } from "@/trpc/react";
 import React from "react";
 import { unstable_noStore } from "next/cache";
 import { api } from "@/trpc/server";
-import { type User } from "@/server/api/repositories/user-repository";
+import { type User } from "@/server/api/common/repositories/user-repository";
 import { UserStoreInitializer } from "@/app/_lib/components/user-store-initializer";
 import { AuthGuard } from "@/app/_lib/components/auth-guard";
 import { cn } from "@/lib/cn";

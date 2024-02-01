@@ -1,8 +1,8 @@
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
 import { z } from "zod";
-import { authService } from "@/server/api/routers/auth/auth-service";
+import { authService } from "@/server/api/routers/auth/auth.service";
 import { TRPCError } from "@trpc/server";
-import { type User } from "@/server/api/repositories/user-repository";
+import { type User } from "@/server/api/common/repositories/user-repository";
 
 export const authRouter = createTRPCRouter({
   login: publicProcedure
