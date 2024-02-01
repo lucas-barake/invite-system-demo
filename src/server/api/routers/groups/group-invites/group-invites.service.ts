@@ -40,7 +40,7 @@ class GroupInvitesService {
       });
     }
 
-    const expirationTime = DateTime.now().plus({ days: 7 }).toJSDate();
+    const expirationTime = DateTime.now().plus({ days: 7 }).toUTC().toJSDate();
     await groupInvitesRepository.addPendingInvite({
       groupId: input.groupId,
       inviteeEmail: input.email,

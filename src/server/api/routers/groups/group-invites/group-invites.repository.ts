@@ -27,6 +27,11 @@ class GroupInvitesRepository {
           invitee_email: inviteeEmail,
           expiration_time: expirationTime,
         })
+        .onConflict((oc) =>
+          oc.columns(["group_id", "invitee_email"]).doUpdateSet({
+            expiration_time: expirationTime,
+          })
+        )
         .executeTakeFirst()
         .then((result) => Number(result.numInsertedOrUpdatedRows));
     } catch (error) {
@@ -61,7 +66,11 @@ class GroupInvitesRepository {
     const invite = await db
       .selectFrom("group_invites")
       .where(({ eb, and }) =>
-        and([eb("group_id", "=", groupId), eb("invitee_email", "=", inviteeEmail)])
+        and([
+          eb("group_id", "=", groupId),
+          eb("invitee_email", "=", inviteeEmail),
+          eb("expiration_time", ">", DateTime.now().toUTC().toJSDate()),
+        ])
       )
       .select(["group_id"])
       .executeTakeFirst();

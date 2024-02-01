@@ -2,7 +2,7 @@ import { Pool } from "pg";
 import { Kysely, PostgresDialect } from "kysely";
 import { type DB } from "kysely-codegen";
 import { env } from "@/env";
-import pc from "picocolors";
+import pc from "@/server/api/common/pc";
 
 const globalForDb = globalThis as unknown as { db: Kysely<DB> | undefined };
 
@@ -22,12 +22,12 @@ function createDbClient(): Kysely<DB> {
               const param = event.query.parameters[Number(index) - 1];
               return param !== null && param !== undefined && typeof param.toString === "function"
                 ? // eslint-disable-next-line @typescript-eslint/no-base-to-string
-                  pc.green(param.toString())
+                  pc.green(`'${param.toString()}'`)
                 : pc.red("UNKNOWN");
             });
 
             const kyselyLabel = pc.yellow(`[Kysely (${event.queryDurationMillis.toFixed(2)}ms)]`);
-            console.debug(`\n${kyselyLabel}\n${formattedSql}\n`);
+            console.debug(`${kyselyLabel}\n${formattedSql}`);
           }
         : undefined,
   });

@@ -88,7 +88,7 @@ export const InviteMembersModal: React.FC<Props> = ({ open, onOpenChange, group 
           <Dialog.Title>Invite Members</Dialog.Title>
         </Dialog.Header>
 
-        <form className="flex flex-col gap-4" onSubmit={form.handleSubmit(handleSubmit)}>
+        <form className="flex flex-col gap-2" onSubmit={form.handleSubmit(handleSubmit)}>
           <div className="grid w-full items-center gap-2">
             <div className="flex items-center justify-between gap-3 sm:justify-start">
               <Label htmlFor="email">Invite a Member</Label>
@@ -116,8 +116,20 @@ export const InviteMembersModal: React.FC<Props> = ({ open, onOpenChange, group 
             </Button>
           </div>
 
-          <p className="text-destructive">{form.formState.errors.email?.message}</p>
+          {form.formState.errors.email !== undefined && (
+            <p className="text-destructive">{form.formState.errors.email?.message}</p>
+          )}
         </form>
+
+        {group.members.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {group.members.map((member) => (
+              <p key={member.id} className="border border-border px-2 py-1">
+                {member.email}
+              </p>
+            ))}
+          </div>
+        )}
 
         <Separator />
 

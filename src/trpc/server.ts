@@ -5,10 +5,11 @@ import { callProcedure } from "@trpc/server";
 import { observable } from "@trpc/server/observable";
 import { type TRPCErrorResponse } from "@trpc/server/rpc";
 import { headers } from "next/headers";
-
 import { appRouter, type AppRouter } from "@/server/api/root";
 import { type TRPCContext } from "@/server/api/trpc";
 import { transformer } from "./shared";
+import pc from "@/server/api/common/pc";
+import { env } from "@/env";
 
 /**
  * This wraps the `createTRPCContext` helper and provides the required context for the tRPC API when
@@ -28,8 +29,20 @@ export const api = createTRPCProxyClient<AppRouter>({
   links: [
     loggerLink({
       enabled: (op) =>
-        process.env.NODE_ENV === "development" ||
-        (op.direction === "down" && op.result instanceof Error),
+        env.NODE_ENV === "development" || (op.direction === "down" && op.result instanceof Error),
+      logger: (opts) => {
+        if (opts.direction === "up") {
+          console.log(pc.orange(`>> [tRPC ${opts.type}] ${opts.path}`));
+        } else if (opts.direction === "down") {
+          if (opts.result instanceof Error || "error" in opts.result.result) {
+            console.log(
+              pc.red(`<< [tRPC ${opts.path}] ${opts.elapsedMs.toFixed(2)}ms ${opts.result}`)
+            );
+          } else {
+            console.log(pc.cyan(`<< [tRPC ${opts.path}] ${opts.elapsedMs.toFixed(2)}ms`));
+          }
+        }
+      },
     }),
     /**
      * Custom RSC link that lets us invoke procedures without using http requests. Since Server

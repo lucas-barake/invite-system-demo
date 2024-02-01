@@ -72,5 +72,6 @@ model GroupInvite {
   @@id([inviteeEmail, groupId])
   @@index([inviteeEmail])
   @@index([groupId])
+  @@index([expirationTime])
   @@map("group_invites")
 }
