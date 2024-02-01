@@ -1,4 +1,4 @@
-import { OwnerActionsMenu } from "@/app/_lib/group-card/owner-actions-menu";
+import { OwnerActionsMenu } from "@/app/_lib/components/group-card/owner-actions-menu";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,6 +7,7 @@ import { type Group } from "@/server/api/routers/groups/groups.types";
 import { CalendarIcon } from "lucide-react";
 import { DateTime } from "luxon";
 import React from "react";
+import { Separator } from "@/components/ui/separator";
 
 type Props = {
   group: Group;
@@ -17,7 +18,7 @@ export const GroupCard: React.FC<Props> = ({ group }) => {
   const isOwner = group.owner.id === session.data?.id;
 
   return (
-    <div className="relative flex flex-col gap-2 rounded-lg border border-border p-6 shadow-sm">
+    <div className="relative flex flex-col gap-4 rounded-lg border border-border p-6 shadow-sm">
       <div className="flex w-full items-center justify-between gap-4">
         <span className="max-w-[250px] text-lg font-bold">{group.title}</span>
 
@@ -34,7 +35,9 @@ export const GroupCard: React.FC<Props> = ({ group }) => {
         </div>
       </div>
 
-      <div className="mt-12 flex w-full items-center justify-between">
+      <Separator />
+
+      <div className="mt-auto flex w-full items-center justify-between">
         <Badge variant="secondary">
           <CalendarIcon className="mr-2 size-4" />
           {DateTime.fromJSDate(group.created_at!).toLocaleString(DateTime.DATE_MED)}

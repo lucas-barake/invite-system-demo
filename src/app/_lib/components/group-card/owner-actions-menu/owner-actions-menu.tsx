@@ -6,7 +6,7 @@ import { type Group } from "@/server/api/routers/groups/groups.types";
 import { api } from "@/trpc/react";
 import { Settings2, Trash2, UserPlus2 } from "lucide-react";
 import React from "react";
-import { InviteMembersModal } from "@/app/_lib/group-card/owner-actions-menu/invite-members-modal";
+import { InviteMembersModal } from "@/app/_lib/components/group-card/owner-actions-menu/invite-members-modal";
 
 type Props = {
   group: Group;
@@ -15,9 +15,9 @@ type Props = {
 export const OwnerActionsMenu: React.FC<Props> = ({ group }) => {
   const [openInviteMembersModal, setOpenInviteMembersModal] = React.useState(false);
   const apiUtils = api.useUtils();
-  const deleteMutation = api.groups.delete.useMutation({
+  const deleteMutation = api.groups.deleteGroup.useMutation({
     onSuccess() {
-      void apiUtils.groups.getAll.invalidate();
+      void apiUtils.groups.getAllGroups.invalidate();
     },
   });
 
@@ -44,7 +44,7 @@ export const OwnerActionsMenu: React.FC<Props> = ({ group }) => {
             }}
           >
             <UserPlus2 className="size-4" />
-            invite Members
+            Invite Members
           </DropdownMenu.Item>
 
           <DropdownMenu.Item

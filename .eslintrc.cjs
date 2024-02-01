@@ -29,6 +29,7 @@ const config = {
         "plugin:@next/next/recommended",
       ],
       rules: {
+        "no-else-return": "error",
         "no-restricted-imports": "off",
         "@typescript-eslint/no-restricted-imports": [
           "error",
@@ -99,7 +100,8 @@ const config = {
           },
         ],
         "@typescript-eslint/prefer-nullish-coalescing": "error",
-        "no-shadow": "error",
+        "no-shadow": "off",
+        "@typescript-eslint/no-shadow": "error",
         "@typescript-eslint/explicit-member-accessibility": [
           "error",
           {
@@ -138,6 +140,8 @@ const config = {
         ],
         "no-self-compare": "error",
         "prefer-template": "error",
+        "no-console": "warn",
+        "@typescript-eslint/no-non-null-assertion": "warn",
 
         // React
         "react/prop-types": "off",

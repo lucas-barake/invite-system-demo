@@ -16,6 +16,8 @@ import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
 import { LucideMail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import toast from "react-hot-toast";
+import { handleToastError } from "@/components/ui/styled-toaster";
 
 type Props = {
   open: boolean;
@@ -45,11 +47,21 @@ export const InviteMembersModal: React.FC<Props> = ({ open, onOpenChange, group 
   const sendInviteMutation = api.groups.sendGroupInvite.useMutation();
 
   async function handleSubmit(data: SendGroupInviteInputType): Promise<void> {
-    await sendInviteMutation.mutateAsync({
-      groupId: group.id,
-      email: data.email,
-    });
-    form.reset();
+    void toast.promise(
+      sendInviteMutation.mutateAsync({
+        groupId: group.id,
+        email: data.email,
+      }),
+      {
+        loading: "Sending invite...",
+        success() {
+          form.reset();
+          onOpenChange(false);
+          return "Invite sent!";
+        },
+        error: handleToastError,
+      }
+    );
   }
 
   return (

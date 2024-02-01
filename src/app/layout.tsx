@@ -7,9 +7,10 @@ import React from "react";
 import { unstable_noStore } from "next/cache";
 import { api } from "@/trpc/server";
 import { type User } from "@/server/api/repositories/user-repository";
-import { UserStoreInitializer } from "@/app/_lib/user-store-initializer";
-import { AuthGuard } from "@/app/_lib/auth-guard/auth-guard";
+import { UserStoreInitializer } from "@/app/_lib/components/user-store-initializer";
+import { AuthGuard } from "@/app/_lib/components/auth-guard";
 import { cn } from "@/lib/cn";
+import { StyledToaster } from "@/components/ui/styled-toaster";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -42,6 +43,7 @@ const RootLayout: React.FC<Props> = async ({ children }) => {
     <html lang="en">
       <body className={cn("font-sans bg-background", inter.variable)}>
         <TRPCReactProvider>
+          <StyledToaster />
           <UserStoreInitializer user={user} />
           <AuthGuard>{children}</AuthGuard>
         </TRPCReactProvider>
@@ -49,5 +51,8 @@ const RootLayout: React.FC<Props> = async ({ children }) => {
     </html>
   );
 };
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default RootLayout;

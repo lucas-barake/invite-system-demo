@@ -25,14 +25,15 @@ model User {
 }
 
 model Group {
-  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid()
-  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
-  title     String
-  todos     Todo[]
-  owner     User          @relation(fields: [ownerId], references: [id])
-  ownerId   String        @map("owner_id") @db.Uuid()
-  members   GroupMember[]
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid()
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
+  title          String
+  todos          Todo[]
+  pendingInvites GroupInvite[]
+  owner          User          @relation(fields: [ownerId], references: [id])
+  ownerId        String        @map("owner_id") @db.Uuid()
+  members        GroupMember[]
 
   @@map("groups")
 }
@@ -59,4 +60,17 @@ model Todo {
   groupId   String    @map("group_id") @db.Uuid()
 
   @@map("todos")
+}
+
+model GroupInvite {
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  inviteeEmail   String   @map("invitee_email")
+  expirationTime DateTime @map("expiration_time") @db.Timestamptz()
+  group          Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId        String   @map("group_id") @db.Uuid()
+
+  @@id([inviteeEmail, groupId])
+  @@index([inviteeEmail])
+  @@index([groupId])
+  @@map("group_invites")
 }

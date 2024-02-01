@@ -12,6 +12,7 @@
     "db:codegen:verify": "kysely-codegen --dialect postgres --verify"
   },
   "dependencies": {
+    "@headlessui/react": "^1.7.18",
     "@hookform/resolvers": "^3.3.4",
     "@prisma/client": "5.8.1",
     "@radix-ui/react-avatar": "^1.0.4",
@@ -43,6 +44,7 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.49.3",
+    "react-hot-toast": "^2.4.1",
     "server-only": "^0.0.1",
     "superjson": "^2.2.1",
     "tailwind-merge": "^2.2.1",

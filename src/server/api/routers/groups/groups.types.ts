@@ -18,3 +18,9 @@ export type Group = {
   members: GroupMember[];
   owner: Omit<GroupMember, "updated_at">;
 };
+
+export type GroupInvite = {
+  groupId: Selectable<Groups>["id"];
+  title: Selectable<Groups>["title"];
+  owner: Omit<GroupMember, "updated_at">;
+};

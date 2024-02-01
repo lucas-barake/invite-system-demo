@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import { signInWithGoogle } from "@/lib/configs/firebase-config";
 import { api } from "@/trpc/react";
 import { useSession } from "@/lib/stores/session-store";
+import { signInWithGoogle } from "@/lib/configs/firebase-config";
 
 export const AuthScreen: React.FC = () => {
   const session = useSession();

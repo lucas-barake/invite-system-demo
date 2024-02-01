@@ -9,6 +9,8 @@ import {
   CreateGroupInput,
   type CreateGroupInputType,
 } from "@/server/api/routers/groups/groups.input";
+import toast from "react-hot-toast";
+import { handleToastError } from "@/components/ui/styled-toaster";
 
 type Props = {
   open: boolean;
@@ -23,15 +25,22 @@ export const CreateGroupModal: React.FC<Props> = (props) => {
     resolver: zodResolver(CreateGroupInput),
   });
   const apiUtils = api.useUtils();
-  const createGroup = api.groups.create.useMutation({
+  const createGroup = api.groups.createGroup.useMutation({
     onSuccess() {
-      void apiUtils.groups.getAll.invalidate();
+      void apiUtils.groups.getAllGroups.invalidate();
     },
   });
 
   async function handleSubmit(data: CreateGroupInputType): Promise<void> {
-    await createGroup.mutateAsync(data);
-    props.onOpenChange(false);
+    void toast.promise(createGroup.mutateAsync(data), {
+      loading: "Creating group...",
+      success() {
+        form.reset();
+        props.onOpenChange(false);
+        return "Group created!";
+      },
+      error: handleToastError,
+    });
   }
 
   return (

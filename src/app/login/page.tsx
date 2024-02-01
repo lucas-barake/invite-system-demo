@@ -1,4 +1,4 @@
-import { AuthScreen } from "@/app/_lib/auth-screen";
+import { AuthScreen } from "@/app/_lib/components/auth-screen";
 import React from "react";
 
 const LoginPage: React.FC = () => {
