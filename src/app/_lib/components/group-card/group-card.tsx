@@ -8,6 +8,7 @@ import { CalendarIcon } from "lucide-react";
 import { DateTime } from "luxon";
 import React from "react";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip } from "@/components/ui/tooltip";
 
 type Props = {
   group: Group;
@@ -24,13 +25,24 @@ export const GroupCard: React.FC<Props> = ({ group }) => {
 
         <div className="flex -space-x-2 overflow-hidden">
           {[group.owner, ...group.members].map((member) => (
-            <Avatar key={member.email} className="size-7">
-              <Avatar.Image src={member.imageUrl ?? undefined} />
+            <Tooltip.Provider key={member.email}>
+              <Tooltip delayDuration={100}>
+                <Tooltip.Trigger asChild>
+                  <Avatar className="size-7">
+                    <Avatar.Image src={member.imageUrl ?? undefined} />
 
-              <Avatar.Fallback>
-                {member.name?.[0]?.toUpperCase() ?? member.email?.[0]?.toUpperCase() ?? "?"}
-              </Avatar.Fallback>
-            </Avatar>
+                    <Avatar.Fallback>
+                      {member.name?.[0]?.toUpperCase() ?? member.email?.[0]?.toUpperCase() ?? "?"}
+                    </Avatar.Fallback>
+                  </Avatar>
+                </Tooltip.Trigger>
+
+                <Tooltip.Content sideOffset={8} side="bottom" className="flex flex-col">
+                  <span>{member.name}</span>
+                  <span className="text-sm text-muted-foreground">({member.email})</span>
+                </Tooltip.Content>
+              </Tooltip>
+            </Tooltip.Provider>
           ))}
         </div>
       </div>
