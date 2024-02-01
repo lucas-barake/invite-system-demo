@@ -7,6 +7,8 @@ import { api } from "@/trpc/react";
 import { Settings2, Trash2, UserPlus2 } from "lucide-react";
 import React from "react";
 import { InviteMembersModal } from "@/app/_lib/components/group-card/owner-actions-menu/invite-members-modal";
+import toast from "react-hot-toast";
+import { handleToastError } from "@/components/ui/styled-toaster";
 
 type Props = {
   group: Group;
@@ -49,7 +51,11 @@ export const OwnerActionsMenu: React.FC<Props> = ({ group }) => {
 
           <DropdownMenu.Item
             onClick={() => {
-              deleteMutation.mutate(group.id);
+              void toast.promise(deleteMutation.mutateAsync(group.id), {
+                loading: "Deleting group...",
+                success: "Group deleted",
+                error: handleToastError,
+              });
             }}
             disabled={deleteMutation.isLoading}
             className="flex flex-row gap-2 bg-destructive hover:bg-destructive/90 focus:bg-destructive/90"
