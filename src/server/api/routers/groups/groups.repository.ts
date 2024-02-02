@@ -143,38 +143,6 @@ class GroupsRepository {
     return Array.from(groupsMap.values());
   }
 
-  public async addMemberToGroup({
-    groupId,
-    userIdToAdd,
-  }: {
-    groupId: string;
-    userIdToAdd: string;
-  }): Promise<void> {
-    await db.transaction().execute(async (trx) => {
-      const group = await trx
-        .selectFrom("groups")
-        .where("id", "=", groupId)
-        .select(["groups.id"])
-        .executeTakeFirst();
-
-      if (group === undefined) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You are not allowed to add members to this group",
-        });
-      }
-
-      await trx
-        .insertInto("group_members")
-        .values({
-          group_id: groupId,
-          user_id: userIdToAdd,
-          updated_at: new Date(),
-        })
-        .execute();
-    });
-  }
-
   public async checkGroupExistence(groupId: string, ownerId: string): Promise<boolean> {
     const group = await db
       .selectFrom("groups")

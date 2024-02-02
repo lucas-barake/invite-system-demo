@@ -9,7 +9,7 @@ import { GroupCard, GroupCardSkeleton } from "@/app/_lib/components/group-card";
 
 const Home: React.FC = () => {
   const [openCreateGroupModal, setOpenCreateGroupModal] = React.useState(false);
-  const todosQuery = api.groups.getAllGroups.useQuery(undefined, {
+  const groupsQuery = api.groups.getAllGroups.useQuery(undefined, {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
@@ -30,8 +30,8 @@ const Home: React.FC = () => {
         </Button>
 
         <div className="grid grow grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {todosQuery.data !== undefined && !todosQuery.isFetching
-            ? todosQuery.data.map((group) => <GroupCard group={group} key={group.id} />)
+          {groupsQuery.data !== undefined && !groupsQuery.isFetching
+            ? groupsQuery.data.map((group) => <GroupCard group={group} key={group.id} />)
             : Array.from({ length: 4 }).map((_, i) => <GroupCardSkeleton key={i} />)}
         </div>
       </div>

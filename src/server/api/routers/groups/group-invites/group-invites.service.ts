@@ -46,21 +46,11 @@ class GroupInvitesService {
       inviteeEmail: input.email,
       expirationTime,
     });
+
     return true;
   }
 
   public async acceptGroupInvite(input: AcceptGroupInviteInputType, session: User): Promise<true> {
-    const memberExists = await groupsRepository.checkGroupMemberExistence({
-      groupId: input.groupId,
-      userEmail: session.email,
-    });
-    if (memberExists) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "You are already a member of this group",
-      });
-    }
-
     const pendingInviteExists = await groupInvitesRepository.checkPendingInviteExistence(
       input.groupId,
       session.email
@@ -72,11 +62,22 @@ class GroupInvitesService {
       });
     }
 
-    await groupsRepository.addMemberToGroup({
+    const memberExists = await groupsRepository.checkGroupMemberExistence({
+      groupId: input.groupId,
+      userEmail: session.email,
+    });
+    if (memberExists) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "You are already a member of this group",
+      });
+    }
+
+    await groupInvitesRepository.addMemberToGroupAndRemovePendingInvite({
       groupId: input.groupId,
       userIdToAdd: session.id,
+      inviteeEmail: session.email,
     });
-    await groupInvitesRepository.deletePendingInvite(input.groupId, session.email);
 
     return true;
   }
