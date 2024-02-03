@@ -7,6 +7,7 @@ import { PendingInviteRow } from "@/app/_lib/components/header/group-invites-mod
 import { BellIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
+import { toast } from "sonner";
 
 export const GroupInvitesModal: React.FC = () => {
   const [open, setOpen] = React.useState(false);
@@ -16,9 +17,17 @@ export const GroupInvitesModal: React.FC = () => {
   const hasPendingInvites = (pendingInvitesQuery.data?.length ?? 0) > 0;
   React.useEffect(() => {
     if (hasPendingInvites) {
-      setOpen(true);
+      toast.info("You have pending group invites", {
+        duration: 15_000,
+        action: {
+          label: "View",
+          onClick: () => {
+            setOpen(true);
+          },
+        },
+      });
     }
-  }, [pendingInvitesQuery.data, hasPendingInvites, setOpen]);
+  }, [pendingInvitesQuery.data, hasPendingInvites]);
   const pendingInvites = pendingInvitesQuery.data ?? [];
 
   return (

@@ -19,6 +19,17 @@ class GroupsService {
     return true;
   }
 
+  public async undoDeleteGroup(groupId: string, ownerId: string): Promise<true> {
+    const restored = await groupsRepository.undoDeleteGroup(groupId, ownerId);
+    if (!restored) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Group not found or you are not the owner of the group",
+      });
+    }
+    return true;
+  }
+
   public async getUserGroups(userId: string): Promise<Group[]> {
     return groupsRepository.getGroupsByUserId(userId);
   }

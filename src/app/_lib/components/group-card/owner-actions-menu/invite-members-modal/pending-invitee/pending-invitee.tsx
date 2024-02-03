@@ -3,8 +3,8 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/react";
-import toast from "react-hot-toast";
-import { handleToastError } from "@/components/ui/styled-toaster";
+import { toast } from "sonner";
+import { handleToastError } from "@/components/ui/toaster";
 
 type Props = {
   inviteeEmail: string;
@@ -43,7 +43,7 @@ export const PendingInvitee: React.FC<Props> = ({ inviteeEmail, groupId }) => {
             {
               loading: "Removing invite...",
               success: "Invite removed!",
-              error: handleToastError,
+              error: (error) => handleToastError(error, "Failed to remove invite"),
             }
           );
         }}

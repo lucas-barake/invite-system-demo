@@ -12,6 +12,10 @@ export const groupsRouter = createTRPCRouter({
     return groupsService.deleteGroup(input, ctx.session.id);
   }),
 
+  undoDeleteGroup: protectedProcedure.input(z.string().uuid()).mutation(({ input, ctx }) => {
+    return groupsService.undoDeleteGroup(input, ctx.session.id);
+  }),
+
   getAllGroups: protectedProcedure.query(({ ctx }) => {
     return groupsService.getUserGroups(ctx.session.id);
   }),

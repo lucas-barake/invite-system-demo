@@ -9,8 +9,8 @@ import {
   CreateGroupInput,
   type CreateGroupInputType,
 } from "@/server/api/routers/groups/groups.input";
-import toast from "react-hot-toast";
-import { handleToastError } from "@/components/ui/styled-toaster";
+import { toast } from "sonner";
+import { handleToastError } from "@/components/ui/toaster";
 
 type Props = {
   open: boolean;
@@ -39,7 +39,7 @@ export const CreateGroupModal: React.FC<Props> = (props) => {
         props.onOpenChange(false);
         return "Group created!";
       },
-      error: handleToastError,
+      error: (error) => handleToastError(error, "Failed to create group"),
     });
   }
 

@@ -7,8 +7,8 @@ import { api } from "@/trpc/react";
 import { Settings2, Trash2, UserPlus2 } from "lucide-react";
 import React from "react";
 import { InviteMembersModal } from "@/app/_lib/components/group-card/owner-actions-menu/invite-members-modal";
-import toast from "react-hot-toast";
-import { handleToastError } from "@/components/ui/styled-toaster";
+import { handleToastError } from "@/components/ui/toaster";
+import { toast } from "sonner";
 
 type Props = {
   group: Group;
@@ -17,11 +17,35 @@ type Props = {
 export const OwnerActionsMenu: React.FC<Props> = ({ group }) => {
   const [openInviteMembersModal, setOpenInviteMembersModal] = React.useState(false);
   const apiUtils = api.useUtils();
-  const deleteMutation = api.groups.deleteGroup.useMutation({
-    onSuccess() {
-      void apiUtils.groups.getAllGroups.invalidate();
-    },
-  });
+  const deleteMutation = api.groups.deleteGroup.useMutation();
+  const undoDeleteMutation = api.groups.undoDeleteGroup.useMutation();
+
+  function undoDeleteGroup(): void {
+    void toast.promise(undoDeleteMutation.mutateAsync(group.id), {
+      loading: "Restoring group...",
+      success() {
+        void apiUtils.groups.getAllGroups.invalidate();
+        return "Group restored";
+      },
+      error: (error) => handleToastError(error, "Failed to restore group"),
+    });
+  }
+
+  async function deleteGroup(): Promise<void> {
+    void toast.promise(deleteMutation.mutateAsync(group.id), {
+      loading: "Deleting group...",
+      success() {
+        void apiUtils.groups.getAllGroups.invalidate();
+        return "Group deleted";
+      },
+      error: (error) => handleToastError(error, "Failed to delete group"),
+      action: {
+        label: "Undo",
+        onClick: undoDeleteGroup,
+      },
+      duration: 15_000,
+    });
+  }
 
   return (
     <React.Fragment>
@@ -51,11 +75,7 @@ export const OwnerActionsMenu: React.FC<Props> = ({ group }) => {
 
           <DropdownMenu.Item
             onClick={() => {
-              void toast.promise(deleteMutation.mutateAsync(group.id), {
-                loading: "Deleting group...",
-                success: "Group deleted",
-                error: handleToastError,
-              });
+              void deleteGroup();
             }}
             disabled={deleteMutation.isLoading}
             className="flex flex-row gap-2 bg-destructive hover:bg-destructive/90 focus:bg-destructive/90"

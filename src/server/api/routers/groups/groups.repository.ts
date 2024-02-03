@@ -3,6 +3,7 @@ import { type Group } from "@/server/api/routers/groups/groups.types";
 import { db } from "@/server/database";
 import { TRPCError } from "@trpc/server";
 import { Logger } from "@/server/api/common/logger";
+import { DateTime } from "luxon";
 
 class GroupsRepository {
   private readonly logger = new Logger(GroupsRepository.name);
@@ -53,56 +54,61 @@ class GroupsRepository {
   }
 
   public async deleteGroup(groupId: string, ownerId: string): Promise<boolean> {
-    const deleteResult = await db
-      .deleteFrom("groups")
-      .where(({ eb, and }) => and([eb("id", "=", groupId), eb("owner_id", "=", ownerId)]))
-      .executeTakeFirst();
-    return deleteResult.numDeletedRows === BigInt(1);
+    return db
+      .updateTable("groups")
+      .where(({ eb, and }) =>
+        and([eb("id", "=", groupId), eb("owner_id", "=", ownerId), eb("deleted_at", "is", null)])
+      )
+      .set({ deleted_at: DateTime.now().toUTC().toJSDate() })
+      .executeTakeFirst()
+      .then(() => true);
+  }
+
+  public async undoDeleteGroup(groupId: string, ownerId: string): Promise<boolean> {
+    const sevenDaysAgo = DateTime.now().minus({ days: 7 }).toUTC().toJSDate();
+    return db
+      .updateTable("groups")
+      .where(({ eb, and }) =>
+        and([
+          eb("id", "=", groupId),
+          eb("owner_id", "=", ownerId),
+          eb("deleted_at", ">=", sevenDaysAgo),
+        ])
+      )
+      .set({ deleted_at: null })
+      .executeTakeFirst()
+      .then(() => true);
   }
 
   public async getGroupsByUserId(userId: string): Promise<Group[]> {
-    const groupSelect = [
-      "groups.created_at as group_created_at",
-      "groups.updated_at as group_updated_at",
-      "groups.owner_id as group_owner_id",
-      "groups.title as group_title",
-      "groups.id as group_id",
-      "owner.email as owner_email",
-      "owner.name as owner_name",
-      "owner.imageUrl as owner_imageUrl",
-      "owner.id as owner_id",
-    ] as const;
-
     const rows = await db
       .selectFrom("groups")
       .leftJoin("group_members", "group_members.group_id", "groups.id")
       .leftJoin("users as member", "member.id", "group_members.user_id")
       .innerJoin("users as owner", "owner.id", "groups.owner_id")
-      .where("groups.owner_id", "=", userId)
+      .where(({ eb, or, and }) =>
+        and([
+          or([eb("groups.owner_id", "=", userId), eb("group_members.user_id", "=", userId)]),
+          eb("groups.deleted_at", "is", null),
+        ])
+      )
       .select([
-        ...groupSelect,
+        "groups.created_at as group_created_at",
+        "groups.updated_at as group_updated_at",
+        "groups.owner_id as group_owner_id",
+        "groups.title as group_title",
+        "groups.id as group_id",
+        "owner.email as owner_email",
+        "owner.name as owner_name",
+        "owner.imageUrl as owner_imageUrl",
+        "owner.id as owner_id",
         "member.email as member_email",
         "member.name as member_name",
         "member.imageUrl as member_imageUrl",
         "member.id as member_id",
         "group_members.updated_at as member_updated_at",
       ])
-      .union((expr) =>
-        expr
-          .selectFrom("groups")
-          .leftJoin("group_members", "group_members.group_id", "groups.id")
-          .leftJoin("users as member", "member.id", "group_members.user_id")
-          .innerJoin("users as owner", "owner.id", "groups.owner_id")
-          .where("group_members.user_id", "=", userId)
-          .select([
-            ...groupSelect,
-            "member.email as member_email",
-            "member.name as member_name",
-            "member.imageUrl as member_imageUrl",
-            "member.id as member_id",
-            "group_members.updated_at as member_updated_at",
-          ])
-      )
+      .orderBy("groups.updated_at", "desc")
       .execute();
 
     const groupsMap = new Map<string, Group>();
@@ -124,6 +130,7 @@ class GroupsRepository {
         });
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const group = groupsMap.get(row.group_id)!;
       if (row.member_id !== null && row.member_email !== null) {
         group.members.push({

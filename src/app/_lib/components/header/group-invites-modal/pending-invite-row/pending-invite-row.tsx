@@ -1,8 +1,8 @@
 import React from "react";
 import { CheckIcon, XIcon } from "lucide-react";
 import { api } from "@/trpc/react";
-import toast from "react-hot-toast";
-import { handleToastError } from "@/components/ui/styled-toaster";
+import { toast } from "sonner";
+import { handleToastError } from "@/components/ui/toaster";
 import { type GroupInvite } from "@/server/api/routers/groups/group-invites/group-invites.types";
 
 type Props = {

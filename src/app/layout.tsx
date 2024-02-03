@@ -1,7 +1,6 @@
 import "@/styles/globals.css";
 
 import { Inter } from "next/font/google";
-
 import { TRPCReactProvider } from "@/trpc/react";
 import React from "react";
 import { unstable_noStore } from "next/cache";
@@ -10,7 +9,7 @@ import { type User } from "@/server/api/common/repositories/user-repository";
 import { UserStoreInitializer } from "@/app/_lib/components/user-store-initializer";
 import { AuthGuard } from "@/app/_lib/components/auth-guard";
 import { cn } from "@/lib/cn";
-import { StyledToaster } from "@/components/ui/styled-toaster";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -43,7 +42,7 @@ const RootLayout: React.FC<Props> = async ({ children }) => {
     <html lang="en">
       <body className={cn("font-sans bg-background", inter.variable)}>
         <TRPCReactProvider>
-          <StyledToaster />
+          <Toaster />
           <UserStoreInitializer user={user} />
           <AuthGuard>{children}</AuthGuard>
         </TRPCReactProvider>

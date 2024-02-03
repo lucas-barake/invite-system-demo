@@ -12,8 +12,8 @@ import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
 import { LucideMail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import toast from "react-hot-toast";
-import { handleToastError } from "@/components/ui/styled-toaster";
+import { toast } from "sonner";
+import { handleToastError } from "@/components/ui/toaster";
 import {
   SendGroupInviteInput,
   type SendGroupInviteInputType,
@@ -76,7 +76,7 @@ export const InviteMembersModal: React.FC<Props> = ({ open, onOpenChange, group 
           form.reset();
           return "Invite sent!";
         },
-        error: handleToastError,
+        error: (error) => handleToastError(error, "Failed to send invite"),
       }
     );
   }

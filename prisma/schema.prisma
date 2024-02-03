@@ -34,7 +34,10 @@ model Group {
   owner          User          @relation(fields: [ownerId], references: [id])
   ownerId        String        @map("owner_id") @db.Uuid()
   members        GroupMember[]
+  deletedAt      DateTime?     @map("deleted_at") @db.Timestamptz()
 
+  @@index([ownerId])
+  // @@index([deletedAt]) WHERE deletedAt IS NULL
   @@map("groups")
 }
 
