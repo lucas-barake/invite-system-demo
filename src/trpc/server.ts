@@ -32,14 +32,16 @@ export const api = createTRPCProxyClient<AppRouter>({
         env.NODE_ENV === "development" || (op.direction === "down" && op.result instanceof Error),
       logger: (opts) => {
         if (opts.direction === "up") {
-          console.log(pc.orange(`>> [tRPC ${opts.type}] ${opts.path}`));
+          console.log(pc.orange(`\n>> [tRPC ${opts.type}] ${opts.path}`));
         } else if (opts.direction === "down") {
           if (opts.result instanceof Error || "error" in opts.result.result) {
             console.log(
-              pc.red(`<< [tRPC ${opts.path}] ${opts.elapsedMs.toFixed(2)}ms ${opts.result}`)
+              pc.red(
+                `<< [tRPC ${opts.path}] ${opts.elapsedMs.toFixed(2)}ms ${JSON.stringify(opts.result)}`
+              )
             );
           } else {
-            console.log(pc.cyan(`<< [tRPC ${opts.path}] ${opts.elapsedMs.toFixed(2)}ms`));
+            console.log(pc.cyan(`<< [tRPC ${opts.path}] ${opts.elapsedMs.toFixed(2)}ms\n`));
           }
         }
       },

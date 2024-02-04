@@ -27,7 +27,7 @@ function createDbClient(): Kysely<DB> {
             });
 
             const kyselyLabel = pc.yellow(`[Kysely (${event.queryDurationMillis.toFixed(2)}ms)]`);
-            console.debug(`${kyselyLabel}\n${formattedSql}`);
+            console.debug(`\n${kyselyLabel} ${formattedSql}\n`);
           }
         : undefined,
   });
