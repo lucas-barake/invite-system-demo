@@ -1,5 +1,4 @@
 import { db } from "@/server/database";
-import { DateTime } from "luxon";
 import { sql } from "kysely";
 
 export async function deleteGroupsCronJob(): Promise<number | undefined> {
@@ -10,7 +9,7 @@ export async function deleteGroupsCronJob(): Promise<number | undefined> {
       FROM
         "groups"
       WHERE
-        "deleted_at" < ${DateTime.now().minus({ days: 7 }).toISO()}
+        "deleted_at" < NOW() - INTERVAL '7 days'
       LIMIT
         5000
     ) AS "t"

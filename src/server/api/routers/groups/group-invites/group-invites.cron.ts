@@ -1,5 +1,4 @@
 import { db } from "@/server/database";
-import { DateTime } from "luxon";
 import { sql } from "kysely";
 
 export async function deleteExpiredInvites(): Promise<number | undefined> {
@@ -11,7 +10,7 @@ export async function deleteExpiredInvites(): Promise<number | undefined> {
       FROM
         "group_invites"
       WHERE
-        "expiration_time" < ${DateTime.now().toISO()}
+        "expiration_time" < NOW()
       LIMIT
         5000
     ) AS "t"
