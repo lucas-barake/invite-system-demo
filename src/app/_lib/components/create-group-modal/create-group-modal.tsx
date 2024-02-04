@@ -34,10 +34,10 @@ export const CreateGroupModal: React.FC<Props> = (props) => {
   async function handleSubmit(data: CreateGroupInputType): Promise<void> {
     void toast.promise(createGroup.mutateAsync(data), {
       loading: "Creating group...",
-      success() {
+      success(newGroup) {
         form.reset();
         props.onOpenChange(false);
-        return "Group created!";
+        return `Group "${newGroup.title}" created successfully!`;
       },
       error: (error) => handleToastError(error, "Failed to create group"),
     });

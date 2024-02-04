@@ -25,7 +25,7 @@ export const OwnerActionsMenu: React.FC<Props> = ({ group }) => {
       loading: "Restoring group...",
       success() {
         void apiUtils.groups.getAllGroups.invalidate();
-        return "Group restored";
+        return `Group "${group.title}" restored`;
       },
       error: (error) => handleToastError(error, "Failed to restore group"),
     });
@@ -36,7 +36,7 @@ export const OwnerActionsMenu: React.FC<Props> = ({ group }) => {
       loading: "Deleting group...",
       success() {
         void apiUtils.groups.getAllGroups.invalidate();
-        return "Group deleted";
+        return `Group "${group.title}" deleted`;
       },
       error: (error) => handleToastError(error, "Failed to delete group"),
       action: {

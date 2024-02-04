@@ -59,9 +59,9 @@ class GroupsRepository {
       .where(({ eb, and }) =>
         and([eb("id", "=", groupId), eb("owner_id", "=", ownerId), eb("deleted_at", "is", null)])
       )
-      .set({ deleted_at: DateTime.now().toUTC().toJSDate() })
+      .set({ deleted_at: DateTime.now().toUTC().toISO() })
       .executeTakeFirst()
-      .then(() => true);
+      .then((data) => Number(data.numUpdatedRows) === 1);
   }
 
   public async undoDeleteGroup(groupId: string, ownerId: string): Promise<boolean> {
@@ -77,7 +77,7 @@ class GroupsRepository {
       )
       .set({ deleted_at: null })
       .executeTakeFirst()
-      .then(() => true);
+      .then((data) => Number(data.numUpdatedRows) === 1);
   }
 
   public async getGroupsByUserId(userId: string): Promise<Group[]> {

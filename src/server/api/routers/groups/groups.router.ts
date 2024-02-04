@@ -16,7 +16,7 @@ export const groupsRouter = createTRPCRouter({
     return groupsService.undoDeleteGroup(input, ctx.session.id);
   }),
 
-  getAllGroups: protectedProcedure.query(({ ctx }) => {
+  getAllGroups: protectedProcedure.query(async ({ ctx }) => {
     return groupsService.getUserGroups(ctx.session.id);
   }),
 });

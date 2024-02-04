@@ -1,13 +1,26 @@
 import { db } from "@/server/database";
 import { DateTime } from "luxon";
+import { sql } from "kysely";
 
-export async function deleteExpiredInvites(): Promise<void> {
-  const currentTime = DateTime.now().toUTC().toJSDate();
-  await db
-    .deleteFrom("group_invites")
-    .where("expiration_time", "<", currentTime)
-    .limit(1000)
-    .execute();
+export async function deleteExpiredInvites(): Promise<number | undefined> {
+  const result = await sql`
+    DELETE FROM "group_invites" USING (
+      SELECT
+        "group_id",
+        "invitee_email"
+      FROM
+        "group_invites"
+      WHERE
+        "expiration_time" < ${DateTime.now().toISO()}
+      LIMIT
+        5000
+    ) AS "t"
+    WHERE
+      "group_invites"."group_id" = "t"."group_id"
+      AND "group_invites"."invitee_email" = "t"."invitee_email";
+  `.execute(db);
+
+  return Number(result.numAffectedRows);
 }
 
 // const cronExpressionEveryTwelveHours = "0 */12 * * * ";
