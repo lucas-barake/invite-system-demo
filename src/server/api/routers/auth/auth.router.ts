@@ -3,6 +3,7 @@ import { z } from "zod";
 import { authService } from "@/server/api/routers/auth/auth.service";
 import { TRPCError } from "@trpc/server";
 import { type User } from "@/server/api/common/repositories/user-repository";
+import { Logger } from "@/server/api/common/logger";
 
 export const authRouter = createTRPCRouter({
   login: publicProcedure
@@ -17,23 +18,21 @@ export const authRouter = createTRPCRouter({
 
   me: protectedProcedure.query(async ({ ctx }): Promise<User> => {
     return {
-      email: ctx.session.email,
-      id: ctx.session.id,
-      imageUrl: ctx.session.imageUrl,
-      name: ctx.session.name,
+      email: ctx.session.user.email,
+      id: ctx.session.user.id,
+      imageUrl: ctx.session.user.imageUrl,
+      name: ctx.session.user.name,
     };
   }),
 
   logout: protectedProcedure.mutation(async ({ ctx }) => {
     try {
       await authService.logout({
-        sessionToken: ctx.session.sessionToken,
-        userId: ctx.session.id,
+        session: ctx.session,
         headers: ctx.headers,
       });
     } catch (error: unknown) {
-      // TODO: Logging
-      console.log("Failed to logout", error);
+      Logger.error("Failed to logout", error);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to logout",

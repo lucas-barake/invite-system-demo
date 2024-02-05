@@ -4,6 +4,7 @@ import { type User, userRepository } from "@/server/api/common/repositories/user
 import { redis } from "@/server/redis";
 import argon2 from "argon2";
 import { createSecureCookie, deleteCookie } from "@/server/api/common/utils/cookie-management";
+import { type Session } from "@/server/api/routers/auth/auth.types";
 
 export const SESSION_TOKEN_COOKIE_KEY = "x-session-token";
 export const USER_ID_COOKIE_KEY = "x-user-id";
@@ -72,7 +73,7 @@ async function checkSessionTokenValidity(
   return false;
 }
 
-async function generateSessionToken(userId: string): Promise<string> {
+async function generateSessionToken(userId: Session["user"]["id"]): Promise<string> {
   const rawToken = `${userId}-${Date.now()}-${Math.random()}`;
   const hashedToken = await argon2.hash(rawToken);
   return hashedToken;
@@ -143,14 +144,10 @@ export const authService = {
     }
   },
 
-  async logout(args: {
-    userId: User["id"];
-    sessionToken: string;
-    headers: Headers;
-  }): Promise<void> {
+  async logout(args: { session: Session; headers: Headers }): Promise<void> {
     await deleteSessionToken({
-      userId: args.userId,
-      sessionToken: args.sessionToken,
+      userId: args.session.user.id,
+      sessionToken: args.session.sessionToken,
     });
 
     deleteCookie({

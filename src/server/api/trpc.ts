@@ -16,7 +16,11 @@ import {
   SESSION_TOKEN_COOKIE_KEY,
   USER_ID_COOKIE_KEY,
 } from "@/server/api/routers/auth/auth.service";
-import { type User } from "@/server/api/common/repositories/user-repository";
+import { type Session } from "@/server/api/routers/auth/auth.types";
+import {
+  rateLimit,
+  type RateLimitConfig,
+} from "@/server/api/common/middlewares/rate-limit/rate-limit";
 
 /**
  * 1. CONTEXT
@@ -80,7 +84,7 @@ export const createTRPCRouter = t.router;
  */
 export const publicProcedure = t.procedure;
 
-export const protectedProcedure = t.procedure.use(async (opts) => {
+const enforceUserIsAuthenticated = t.middleware(async (opts) => {
   const encodedSessionToken = cookies().get(SESSION_TOKEN_COOKIE_KEY)?.value;
   const userId = cookies().get(USER_ID_COOKIE_KEY)?.value;
   if (encodedSessionToken === undefined || userId === undefined) {
@@ -114,12 +118,14 @@ export const protectedProcedure = t.procedure.use(async (opts) => {
       ctx: {
         ...opts.ctx,
         session: {
-          email: result.userInfo.email,
-          id: result.userInfo.id,
-          imageUrl: result.userInfo.imageUrl,
-          name: result.userInfo.name,
+          user: {
+            id: result.userInfo.id,
+            email: result.userInfo.email,
+            imageUrl: result.userInfo.imageUrl,
+            name: result.userInfo.name,
+          },
           sessionToken: result.sessionToken,
-        } satisfies User & { sessionToken: string },
+        } satisfies Session,
       },
     });
   } catch (error: unknown) {
@@ -132,3 +138,29 @@ export const protectedProcedure = t.procedure.use(async (opts) => {
     });
   }
 });
+export const protectedProcedure = t.procedure.use(enforceUserIsAuthenticated);
+export const protectedRateLimitedProcedure = (
+  configOrFn:
+    | RateLimitConfig
+    | ((session: Session) => RateLimitConfig)
+    | ((session: Session) => Promise<RateLimitConfig>)
+) => {
+  return protectedProcedure.use(async (opts) => {
+    let config: RateLimitConfig;
+
+    if (typeof configOrFn === "function") {
+      const result = configOrFn(opts.ctx.session);
+
+      if (result instanceof Promise) {
+        config = await result;
+      } else {
+        config = result;
+      }
+    } else {
+      config = configOrFn;
+    }
+
+    await rateLimit(opts.ctx.session, config);
+    return opts.next(opts);
+  });
+};

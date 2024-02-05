@@ -4,6 +4,7 @@ import { type Selectable } from "kysely";
 import { redis } from "@/server/redis";
 
 const USER_INFO_PREFIX = "user-info:";
+
 export function getUserInfoKey(userId: string): string {
   return `${USER_INFO_PREFIX}${userId}`;
 }

@@ -1,5 +1,4 @@
 import { Logger } from "@/server/api/common/logger";
-import type { User } from "@/server/api/common/repositories/user-repository";
 import { groupsRepository } from "@/server/api/routers/groups/groups.repository";
 import { TRPCError } from "@trpc/server";
 import { DateTime } from "luxon";
@@ -9,19 +8,20 @@ import {
   type SendGroupInviteInputType,
 } from "@/server/api/routers/groups/group-invites/group-invites.input";
 import { type GroupInvite } from "@/server/api/routers/groups/group-invites/group-invites.types";
+import { type Session } from "@/server/api/routers/auth/auth.types";
 
 class GroupInvitesService {
   private readonly _logger = new Logger(GroupInvitesService.name);
 
-  public async sendGroupInvite(input: SendGroupInviteInputType, session: User): Promise<true> {
-    if (input.email === session.email) {
+  public async sendGroupInvite(input: SendGroupInviteInputType, session: Session): Promise<true> {
+    if (input.email === session.user.email) {
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: "You cannot invite yourself",
       });
     }
 
-    const group = await groupsRepository.checkGroupExistence(input.groupId, session.id);
+    const group = await groupsRepository.checkGroupExistence(input.groupId, session.user.id);
     if (!group) {
       throw new TRPCError({
         code: "BAD_REQUEST",
@@ -50,10 +50,13 @@ class GroupInvitesService {
     return true;
   }
 
-  public async acceptGroupInvite(input: AcceptGroupInviteInputType, session: User): Promise<true> {
+  public async acceptGroupInvite(
+    input: AcceptGroupInviteInputType,
+    session: Session
+  ): Promise<true> {
     const pendingInviteExists = await groupInvitesRepository.checkPendingInviteExistence(
       input.groupId,
-      session.email
+      session.user.email
     );
     if (!pendingInviteExists) {
       throw new TRPCError({
@@ -64,7 +67,7 @@ class GroupInvitesService {
 
     const memberExists = await groupsRepository.checkGroupMemberExistence({
       groupId: input.groupId,
-      userEmail: session.email,
+      userEmail: session.user.email,
     });
     if (memberExists) {
       throw new TRPCError({
@@ -75,15 +78,15 @@ class GroupInvitesService {
 
     await groupInvitesRepository.addMemberToGroupAndRemovePendingInvite({
       groupId: input.groupId,
-      userIdToAdd: session.id,
-      inviteeEmail: session.email,
+      userIdToAdd: session.user.id,
+      inviteeEmail: session.user.email,
     });
 
     return true;
   }
 
-  public async declineGroupInvite(groupId: string, session: User): Promise<boolean> {
-    const result = await groupInvitesRepository.deletePendingInvite(groupId, session.email);
+  public async declineGroupInvite(groupId: string, session: Session): Promise<boolean> {
+    const result = await groupInvitesRepository.deletePendingInvite(groupId, session.user.email);
     return result !== 0;
   }
 
@@ -94,9 +97,9 @@ class GroupInvitesService {
   }: {
     groupId: string;
     inviteeEmail: string;
-    session: User;
+    session: Session;
   }): Promise<boolean> {
-    const groupExists = await groupsRepository.checkGroupExistence(groupId, session.id);
+    const groupExists = await groupsRepository.checkGroupExistence(groupId, session.user.id);
     if (!groupExists) {
       throw new TRPCError({
         code: "BAD_REQUEST",
@@ -107,12 +110,12 @@ class GroupInvitesService {
     return result !== 0;
   }
 
-  public async getPendingInvitesForUser(session: User): Promise<GroupInvite[]> {
-    return groupInvitesRepository.getPendingInvitesForUser(session.email);
+  public async getPendingInvitesForUser(session: Session): Promise<GroupInvite[]> {
+    return groupInvitesRepository.getPendingInvitesForUser(session.user.email);
   }
 
-  public async getPendingInvitesForGroup(groupId: string, session: User): Promise<string[]> {
-    const group = await groupsRepository.checkGroupExistence(groupId, session.id);
+  public async getPendingInvitesForGroup(groupId: string, session: Session): Promise<string[]> {
+    const group = await groupsRepository.checkGroupExistence(groupId, session.user.id);
     if (!group) {
       throw new TRPCError({
         code: "BAD_REQUEST",
