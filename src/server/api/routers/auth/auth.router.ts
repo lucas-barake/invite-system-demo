@@ -2,8 +2,8 @@ import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/
 import { z } from "zod";
 import { authService } from "@/server/api/routers/auth/auth.service";
 import { TRPCError } from "@trpc/server";
-import { type User } from "@/server/api/common/repositories/user-repository";
 import { Logger } from "@/server/api/common/logger";
+import { type MeQueryResult } from "@/server/api/routers/auth/auth.types";
 
 export const authRouter = createTRPCRouter({
   login: publicProcedure
@@ -12,16 +12,13 @@ export const authRouter = createTRPCRouter({
         accessToken: z.string(),
       })
     )
-    .mutation(async ({ input, ctx }): Promise<User> => {
+    .mutation(async ({ input, ctx }): Promise<MeQueryResult> => {
       return authService.login(input.accessToken, ctx.headers);
     }),
 
-  me: protectedProcedure.query(async ({ ctx }): Promise<User> => {
+  me: protectedProcedure.query(async ({ ctx }): Promise<MeQueryResult> => {
     return {
-      email: ctx.session.user.email,
-      id: ctx.session.user.id,
-      imageUrl: ctx.session.user.imageUrl,
-      name: ctx.session.user.name,
+      user: ctx.session.user,
     };
   }),
 

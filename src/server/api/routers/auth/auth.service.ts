@@ -1,10 +1,10 @@
 import { admin } from "@/server/firebase-admin";
 import { TRPCError } from "@trpc/server";
-import { type User, userRepository } from "@/server/api/common/repositories/user-repository";
+import { type User, userRepository } from "@/server/api/common/repositories/user.repository";
 import { redis } from "@/server/redis";
 import argon2 from "argon2";
 import { createSecureCookie, deleteCookie } from "@/server/api/common/utils/cookie-management";
-import { type Session } from "@/server/api/routers/auth/auth.types";
+import { type MeQueryResult, type Session } from "@/server/api/routers/auth/auth.types";
 
 export const SESSION_TOKEN_COOKIE_KEY = "x-session-token";
 export const USER_ID_COOKIE_KEY = "x-user-id";
@@ -80,7 +80,7 @@ async function generateSessionToken(userId: Session["user"]["id"]): Promise<stri
 }
 
 export const authService = {
-  async login(accessToken: string, headers: Headers): Promise<User> {
+  async login(accessToken: string, headers: Headers): Promise<MeQueryResult> {
     try {
       const verifiedToken = await admin.auth().verifyIdToken(accessToken);
       if (verifiedToken.email === undefined) {
@@ -127,7 +127,9 @@ export const authService = {
         value: userInfo.id,
       });
 
-      return userInfo;
+      return {
+        user: userInfo,
+      };
     } catch (error: unknown) {
       if (error instanceof Error) {
         throw new TRPCError({
@@ -164,7 +166,7 @@ export const authService = {
   async validateSessionToken(args: { encodedSessionToken: string; userId: User["id"] }): Promise<
     | {
         success: true;
-        userInfo: User | null;
+        userInfo: Session["user"] | null;
         sessionToken: string;
       }
     | {
@@ -182,7 +184,7 @@ export const authService = {
 
     return {
       success: true,
-      userInfo: await userRepository.getUserById(args.userId),
+      userInfo: await userRepository.getUserById(args.userId, true),
       sessionToken: decodedSessionToken,
     };
   },

@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { type User } from "@/server/api/common/repositories/user-repository";
 import { useSession } from "@/lib/stores/session-store";
+import { type MeQueryResult } from "@/server/api/routers/auth/auth.types";
 
 type Props = {
-  user: User | null;
+  user: MeQueryResult | null;
 };
 
 export const UserStoreInitializer: React.FC<Props> = ({ user }) => {

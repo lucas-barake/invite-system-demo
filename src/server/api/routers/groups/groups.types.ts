@@ -1,4 +1,4 @@
-import { type User } from "@/server/api/common/repositories/user-repository";
+import { type User } from "@/server/api/common/repositories/user.repository";
 import { type Selectable } from "kysely";
 import { type GroupMembers, type Groups } from "kysely-codegen";
 
@@ -18,3 +18,6 @@ export type Group = {
   members: GroupMember[];
   owner: Omit<GroupMember, "updated_at">;
 };
+
+export type GetAllGroupsQueryResult = Group[];
+export type CreateGroupMutationResult = GetAllGroupsQueryResult[number];

@@ -6,16 +6,20 @@ import {
   protectedRateLimitedProcedure,
 } from "@/server/api/trpc";
 import { z } from "zod";
+import {
+  type CreateGroupMutationResult,
+  type GetAllGroupsQueryResult,
+} from "@/server/api/routers/groups/groups.types";
 
 export const groupsRouter = createTRPCRouter({
   createGroup: protectedRateLimitedProcedure({
     enabled: true,
-    maxRequests: 2,
+    maxRequests: 10,
     per: [1, "minutes"],
     uniqueId: "create-group",
   })
     .input(CreateGroupInput)
-    .mutation(({ input, ctx }) => {
+    .mutation(({ input, ctx }): Promise<CreateGroupMutationResult> => {
       return groupsService.createGroup(input, ctx.session);
     }),
 
@@ -27,7 +31,7 @@ export const groupsRouter = createTRPCRouter({
     return groupsService.undoDeleteGroup(input, ctx.session);
   }),
 
-  getAllGroups: protectedProcedure.query(async ({ ctx }) => {
+  getAllGroups: protectedProcedure.query(async ({ ctx }): Promise<GetAllGroupsQueryResult> => {
     return groupsService.getUserGroups(ctx.session);
   }),
 });

@@ -17,10 +17,7 @@ import {
   USER_ID_COOKIE_KEY,
 } from "@/server/api/routers/auth/auth.service";
 import { type Session } from "@/server/api/routers/auth/auth.types";
-import {
-  rateLimit,
-  type RateLimitConfig,
-} from "@/server/api/common/middlewares/rate-limit/rate-limit";
+import { rateLimit, type RateLimitConfig } from "@/server/api/common/middlewares/rate-limit";
 
 /**
  * 1. CONTEXT
@@ -118,12 +115,7 @@ const enforceUserIsAuthenticated = t.middleware(async (opts) => {
       ctx: {
         ...opts.ctx,
         session: {
-          user: {
-            id: result.userInfo.id,
-            email: result.userInfo.email,
-            imageUrl: result.userInfo.imageUrl,
-            name: result.userInfo.name,
-          },
+          user: result.userInfo,
           sessionToken: result.sessionToken,
         } satisfies Session,
       },

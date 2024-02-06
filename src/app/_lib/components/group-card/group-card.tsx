@@ -3,7 +3,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/lib/stores/session-store";
-import { type Group } from "@/server/api/routers/groups/groups.types";
+import { type GetAllGroupsQueryResult } from "@/server/api/routers/groups/groups.types";
 import { CalendarIcon } from "lucide-react";
 import { DateTime } from "luxon";
 import React from "react";
@@ -11,12 +11,12 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip";
 
 type Props = {
-  group: Group;
+  group: GetAllGroupsQueryResult[number];
 };
 
 export const GroupCard: React.FC<Props> = ({ group }) => {
   const session = useSession();
-  const isOwner = group.owner.id === session.data?.id;
+  const isOwner = group.owner.id === session.data?.user.id;
 
   return (
     <div className="relative flex flex-col gap-4 rounded-lg border border-border p-6 shadow-sm">

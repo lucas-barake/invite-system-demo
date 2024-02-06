@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
-import { type Group } from "@/server/api/routers/groups/groups.types";
+import { type GetAllGroupsQueryResult } from "@/server/api/routers/groups/groups.types";
 import { api } from "@/trpc/react";
 import { Settings2, Trash2, UserPlus2 } from "lucide-react";
 import React from "react";
@@ -11,7 +11,7 @@ import { handleToastError } from "@/components/ui/toaster";
 import { toast } from "sonner";
 
 type Props = {
-  group: Group;
+  group: GetAllGroupsQueryResult[number];
 };
 
 export const OwnerActionsMenu: React.FC<Props> = ({ group }) => {

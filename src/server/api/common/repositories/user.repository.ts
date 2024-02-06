@@ -1,7 +1,6 @@
-import { type Users } from "kysely-codegen";
 import { db } from "@/server/database";
-import { type Selectable } from "kysely";
 import { redis } from "@/server/redis";
+import { type Session } from "@/server/api/routers/auth/auth.types";
 
 const USER_INFO_PREFIX = "user-info:";
 
@@ -9,12 +8,7 @@ export function getUserInfoKey(userId: string): string {
   return `${USER_INFO_PREFIX}${userId}`;
 }
 
-export type User = {
-  email: Users["email"];
-  id: Selectable<Users>["id"];
-  name: Users["name"];
-  imageUrl: Users["imageUrl"];
-};
+export type User = Pick<Session["user"], "id" | "name" | "email" | "imageUrl">;
 
 export const userRepository = {
   async cacheUserInfo(userId: User["id"], user: User): Promise<void> {
@@ -27,20 +21,36 @@ export const userRepository = {
     );
   },
 
-  async getCachedUserInfo(id: User["id"]): Promise<User | null> {
+  async getCachedUserInfo(id: Session["user"]["id"]): Promise<Session["user"] | null> {
     const userKey = getUserInfoKey(id);
     const cachedUserInfo = await redis.get(userKey);
-    return cachedUserInfo !== null ? (JSON.parse(cachedUserInfo) as User) : null;
+    return cachedUserInfo !== null ? (JSON.parse(cachedUserInfo) as Session["user"]) : null;
   },
 
-  async getUserById(id: User["id"]): Promise<User | null> {
+  async getUserById<T extends boolean = false>(
+    id: User["id"],
+    includeSensitiveInfo?: T
+  ): Promise<(T extends true ? Session["user"] : User) | null> {
     const cachedUserInfo = await this.getCachedUserInfo(id);
     if (cachedUserInfo !== null) {
-      return cachedUserInfo;
+      if (includeSensitiveInfo === true) {
+        return cachedUserInfo;
+      }
+      return {
+        email: cachedUserInfo.email,
+        imageUrl: cachedUserInfo.imageUrl,
+        name: cachedUserInfo.name,
+        id: cachedUserInfo.id,
+        // Make TypeScript happy
+      } satisfies User as T extends true ? Session["user"] : User;
     }
     const userQuery = await db
       .selectFrom("users")
-      .select(["id", "name", "email", "imageUrl"])
+      .select(
+        includeSensitiveInfo === true
+          ? ["id", "name", "email", "imageUrl", "phoneNumber", "phoneVerified"]
+          : ["id", "name", "email", "imageUrl"]
+      )
       .where("id", "=", id)
       .executeTakeFirst();
     if (userQuery !== undefined) {
@@ -52,7 +62,7 @@ export const userRepository = {
   async upsertUser(data: {
     onCreate: Pick<User, "name" | "imageUrl" | "email">;
     onUpdate: Pick<User, "name" | "imageUrl">;
-  }): Promise<User | null> {
+  }): Promise<Session["user"] | null> {
     const result = await db
       .insertInto("users")
       .values({
@@ -67,7 +77,7 @@ export const userRepository = {
           imageUrl: data.onUpdate.imageUrl,
         })
       )
-      .returning(["id", "name", "email", "imageUrl"])
+      .returning(["id", "name", "email", "imageUrl", "phoneNumber", "phoneVerified"])
       .executeTakeFirst();
 
     if (result !== undefined) {

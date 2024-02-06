@@ -54,7 +54,7 @@ export const InviteMembersModal: React.FC<Props> = ({ open, onOpenChange, group 
     mode: "onSubmit",
     reValidateMode: "onChange",
     resolver: zodResolver(
-      SendGroupInviteInput.refine((data) => data.email !== session.data?.email, {
+      SendGroupInviteInput.refine((data) => data.email !== session.data?.user.email, {
         message: "You can't invite yourself",
         path: ["email"],
       }).refine((data) => !group.members.some((member) => member.email === data.email), {

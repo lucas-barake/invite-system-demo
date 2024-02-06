@@ -2,7 +2,7 @@ import { Logger } from "@/server/api/common/logger";
 import { db } from "@/server/database";
 import { TRPCError } from "@trpc/server";
 import { DateTime } from "luxon";
-import { userRepository } from "@/server/api/common/repositories/user-repository";
+import { userRepository } from "@/server/api/common/repositories/user.repository";
 import { type GroupInvite } from "@/server/api/routers/groups/group-invites/group-invites.types";
 
 class GroupInvitesRepository {
