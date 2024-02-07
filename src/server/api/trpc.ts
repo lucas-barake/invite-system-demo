@@ -17,10 +17,7 @@ import {
   USER_ID_COOKIE_KEY,
 } from "@/server/api/routers/auth/auth.service";
 import { type Session } from "@/server/api/routers/auth/auth.types";
-import {
-  rateLimit,
-  type RateLimitConfig,
-} from "@/server/api/common/middlewares/rate-limit/rate-limit";
+import { rateLimit, type RateLimitConfig } from "@/server/api/common/middlewares/rate-limit";
 
 /**
  * 1. CONTEXT
@@ -84,6 +81,9 @@ export const createTRPCRouter = t.router;
  */
 export const publicProcedure = t.procedure;
 
+type ProtectedProcedureOpts = TRPCContext & {
+  session: Session;
+};
 const enforceUserIsAuthenticated = t.middleware(async (opts) => {
   const encodedSessionToken = cookies().get(SESSION_TOKEN_COOKIE_KEY)?.value;
   const userId = cookies().get(USER_ID_COOKIE_KEY)?.value;
@@ -118,15 +118,10 @@ const enforceUserIsAuthenticated = t.middleware(async (opts) => {
       ctx: {
         ...opts.ctx,
         session: {
-          user: {
-            id: result.userInfo.id,
-            email: result.userInfo.email,
-            imageUrl: result.userInfo.imageUrl,
-            name: result.userInfo.name,
-          },
+          user: result.userInfo,
           sessionToken: result.sessionToken,
-        } satisfies Session,
-      },
+        },
+      } satisfies ProtectedProcedureOpts,
     });
   } catch (error: unknown) {
     if (error instanceof TRPCError) {
@@ -142,14 +137,14 @@ export const protectedProcedure = t.procedure.use(enforceUserIsAuthenticated);
 export const protectedRateLimitedProcedure = (
   configOrFn:
     | RateLimitConfig
-    | ((session: Session) => RateLimitConfig)
-    | ((session: Session) => Promise<RateLimitConfig>)
+    | ((opts: ProtectedProcedureOpts) => RateLimitConfig)
+    | ((opts: ProtectedProcedureOpts) => Promise<RateLimitConfig>)
 ) => {
   return protectedProcedure.use(async (opts) => {
     let config: RateLimitConfig;
 
     if (typeof configOrFn === "function") {
-      const result = configOrFn(opts.ctx.session);
+      const result = configOrFn({ ...opts.ctx, session: opts.ctx.session });
 
       if (result instanceof Promise) {
         config = await result;

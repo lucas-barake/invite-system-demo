@@ -1,11 +1,17 @@
 import { type CreateGroupInputType } from "@/server/api/routers/groups/groups.input";
 import { groupsRepository } from "@/server/api/routers/groups/groups.repository";
-import { type Group } from "@/server/api/routers/groups/groups.types";
+import {
+  type CreateGroupMutationResult,
+  type GetAllGroupsQueryResult,
+} from "@/server/api/routers/groups/groups.types";
 import { TRPCError } from "@trpc/server";
 import { type Session } from "@/server/api/routers/auth/auth.types";
 
 class GroupsService {
-  public async createGroup(input: CreateGroupInputType, session: Session): Promise<Group> {
+  public async createGroup(
+    input: CreateGroupInputType,
+    session: Session
+  ): Promise<CreateGroupMutationResult> {
     return groupsRepository.createGroup({ ...input, ownerId: session.user.id });
   }
 
@@ -31,7 +37,7 @@ class GroupsService {
     return true;
   }
 
-  public async getUserGroups(session: Session): Promise<Group[]> {
+  public async getUserGroups(session: Session): Promise<GetAllGroupsQueryResult> {
     return groupsRepository.getGroupsByUserId(session.user.id);
   }
 }

@@ -16,6 +16,8 @@ model User {
   updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz()
   name           String?
   email          String        @unique
+  phoneNumber    String?       @unique
+  phoneVerified  DateTime?     @db.Timestamptz(6)
   imageUrl       String?
   groups         Group[]
   groupsAsMember GroupMember[]
