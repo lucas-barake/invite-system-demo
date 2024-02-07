@@ -4,6 +4,7 @@ import { useSession } from "@/lib/stores/session-store";
 import { Button } from "@/components/ui/button";
 import { UpdatePhoneModal } from "src/app/_lib/components/header/user-dropdown-menu/settings-modal/update-phone-modal";
 import { Edit, PlusIcon } from "lucide-react";
+import { parsePhoneNumber } from "libphonenumber-js/min";
 
 type Props = {
   open: boolean;
@@ -14,9 +15,8 @@ type Props = {
 export const SettingsModal: React.FC<Props> = ({ open, onOpenChange }) => {
   const session = useSession();
   const [showPhoneModal, setShowPhoneModal] = React.useState(false);
-  const phoneNumberId = React.useId();
 
-  const handlePhoneModalOpenChange = (newOpen: boolean) => {
+  function handlePhoneModalOpenChange(newOpen: boolean): void {
     if (newOpen) {
       setShowPhoneModal(true);
       onOpenChange(false);
@@ -24,7 +24,7 @@ export const SettingsModal: React.FC<Props> = ({ open, onOpenChange }) => {
       setShowPhoneModal(false);
       onOpenChange(true);
     }
-  };
+  }
 
   return (
     <React.Fragment>
@@ -48,12 +48,15 @@ export const SettingsModal: React.FC<Props> = ({ open, onOpenChange }) => {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor={phoneNumberId} className="text-sm font-semibold">
-              Phone Number
-            </label>
+            <span className="text-sm font-semibold">Phone Number</span>
 
             <div className="flex items-center gap-2">
-              <span>{session.data?.user.phoneNumber ?? "No phone number"}</span>
+              <span>
+                {session.data?.user.phoneNumber !== undefined &&
+                session.data?.user.phoneNumber !== null
+                  ? parsePhoneNumber(session.data.user.phoneNumber).formatInternational()
+                  : "No phone number"}
+              </span>
               <Button
                 type="button"
                 variant="secondary"
@@ -77,7 +80,7 @@ export const SettingsModal: React.FC<Props> = ({ open, onOpenChange }) => {
             </div>
           </div>
 
-          <Dialog.Footer className="mt-8">
+          <Dialog.Footer>
             <Dialog.Trigger asChild>
               <Button type="button" variant="secondary">
                 Close

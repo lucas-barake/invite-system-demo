@@ -5,25 +5,19 @@ import {
   sendPhoneOtpInput,
   type SendPhoneOtpInput,
 } from "@/server/api/routers/user/phone/phone.input";
-import {
-  countriesWithCodes,
-  type CountryWithCode,
-} from "@/app/_lib/components/header/user-dropdown-menu/settings-modal/update-phone-modal/countries-with-code";
+import { countriesWithCodes } from "@/app/_lib/components/header/user-dropdown-menu/settings-modal/update-phone-modal/countries-with-code";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Popover } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { CheckIcon, ChevronsUpDown } from "lucide-react";
-import { Command } from "@/components/ui/command";
-import { cn } from "@/lib/cn";
 import { Input } from "@/components/ui/input";
 import { AsYouType } from "libphonenumber-js/min";
 import { OtpModal } from "@/app/_lib/components/header/user-dropdown-menu/settings-modal/update-phone-modal/otp-modal";
-import { stringUtils } from "@/lib/utils/string-utils";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import { TRPCError } from "@trpc/server";
 import { handleToastError } from "@/components/ui/toaster";
+import { type ComboboxOption, ComboboxSelect } from "@/components/ui/combobox-select";
+import { stringUtils } from "@/lib/utils/string-utils";
 
 type Props = {
   open: boolean;
@@ -33,34 +27,13 @@ type Props = {
 export const UpdatePhoneModal: React.FC<Props> = ({ open, onOpenChange }) => {
   const session = useSession();
   const [phone, setPhone] = React.useState<SendPhoneOtpInput["phone"] | null>(null);
-  const [openCombobox, setOpenCombobox] = React.useState(false);
-  const initialCountry = React.useMemo(() => {
-    if (phone !== null) {
-      return (
-        countriesWithCodes.find((c) => c.code_2 === phone?.countryCode) ?? countriesWithCodes[0]
-      );
-    }
-    return countriesWithCodes[0];
-  }, [phone]);
-  const [selectedCountry, setSelectedCountry] = React.useState<CountryWithCode>(initialCountry);
-  const [countryQuery, setCountryQuery] = React.useState<string>();
-  const filteredCountries = React.useMemo(
-    () =>
-      countriesWithCodes.filter((c) => {
-        return countryQuery === undefined
-          ? true
-          : stringUtils.normalize(c.name_en).includes(stringUtils.normalize(countryQuery));
-      }),
-    [countryQuery]
-  );
-
   const [showOtpModal, setShowOtpModal] = React.useState(false);
 
   const form = useForm<SendPhoneOtpInput>({
     defaultValues: {
       phone: {
         phoneNumber: phone?.phoneNumber ?? "",
-        countryCode: phone?.countryCode ?? selectedCountry.code_2,
+        countryCode: phone?.countryCode ?? countriesWithCodes[0].code_2,
       },
     },
     resolver: zodResolver(sendPhoneOtpInput),
@@ -68,6 +41,25 @@ export const UpdatePhoneModal: React.FC<Props> = ({ open, onOpenChange }) => {
     reValidateMode: "onChange",
   });
   const typedPhoneNumber = form.watch("phone");
+  const selectedCountryCode = form.watch("phone.countryCode");
+  const selectedCountryInfo = React.useMemo(() => {
+    return (
+      countriesWithCodes.find(
+        (country) =>
+          stringUtils.normalize(country.code_2) === stringUtils.normalize(selectedCountryCode)
+      ) ?? countriesWithCodes[0]
+    );
+  }, [countriesWithCodes, selectedCountryCode]);
+  const selectedCountryOption: ComboboxOption = {
+    label: `${selectedCountryInfo.emoji} (${selectedCountryInfo.dial_code})`,
+    value: selectedCountryInfo.code_2,
+  };
+  const countryOptions = React.useMemo(() => {
+    return countriesWithCodes.map((item) => ({
+      label: `${item.emoji} ${item.name_en} (${item.dial_code})`,
+      value: item.code_2,
+    }));
+  }, []);
 
   const apiUtils = api.useUtils();
   const sendOtpMutation = api.user.phone.sendOtp.useMutation();
@@ -128,59 +120,27 @@ export const UpdatePhoneModal: React.FC<Props> = ({ open, onOpenChange }) => {
 
           <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col gap-2">
             <div className="flex grow items-center gap-2">
-              <Popover
-                open={openCombobox}
-                onOpenChange={(): void => {
-                  setOpenCombobox(!openCombobox);
+              <ComboboxSelect
+                buttonLabel="Select a country"
+                defaultValue={selectedCountryOption.value}
+                emptyLabel="No countries found"
+                options={countryOptions}
+                selectedOption={selectedCountryOption}
+                placeholder="Search for a country"
+                onValueChange={(value) => {
+                  const newCountry = countriesWithCodes.find(
+                    (item) => stringUtils.normalize(item.code_2) === stringUtils.normalize(value)
+                  );
+                  if (newCountry !== undefined) {
+                    form.setValue("phone.countryCode", newCountry.code_2);
+                    console.log({
+                      newCountry,
+                      value,
+                      formValues: form.getValues(),
+                    });
+                  }
                 }}
-              >
-                <Popover.Trigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={true}
-                    className="w-[125px] justify-between px-2.5"
-                    title="Select country"
-                  >
-                    {selectedCountry.emoji} {selectedCountry.dial_code}
-                    <ChevronsUpDown className="ml-1 size-4 shrink-0 opacity-50" />
-                  </Button>
-                </Popover.Trigger>
-
-                <Popover.Content className="w-[300px] p-0">
-                  <Command shouldFilter={false} defaultValue={selectedCountry.code_2}>
-                    <Command.Input
-                      placeholder="Search for a country"
-                      value={countryQuery}
-                      onValueChange={setCountryQuery}
-                    />
-
-                    <Command.Empty>There are no countries that match your search</Command.Empty>
-
-                    <Command.List>
-                      {filteredCountries.map((item) => (
-                        <Command.Item
-                          key={item.code_2}
-                          onSelect={(): void => {
-                            setSelectedCountry(item);
-                            setOpenCombobox(false);
-                            form.setValue("phone.countryCode", item.code_2);
-                          }}
-                          className="cursor-pointer"
-                        >
-                          <CheckIcon
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedCountry === item ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          {item.emoji} {item.name_en} ({item.dial_code})
-                        </Command.Item>
-                      ))}
-                    </Command.List>
-                  </Command>
-                </Popover.Content>
-              </Popover>
+              />
 
               <Controller
                 name="phone.phoneNumber"
@@ -188,11 +148,11 @@ export const UpdatePhoneModal: React.FC<Props> = ({ open, onOpenChange }) => {
                 render={({ field }) => {
                   return (
                     <Input
-                      placeholder={selectedCountry.placeholder}
+                      placeholder={selectedCountryInfo?.placeholder}
                       value={field.value}
                       onChange={(e) => {
                         let newValue = e.target.value;
-                        const newFormattedValue = new AsYouType(selectedCountry.code_2).input(
+                        const newFormattedValue = new AsYouType(selectedCountryInfo?.code_2).input(
                           newValue
                         );
                         if (
@@ -201,7 +161,7 @@ export const UpdatePhoneModal: React.FC<Props> = ({ open, onOpenChange }) => {
                         ) {
                           newValue = newValue.slice(0, -1);
                         }
-                        field.onChange(new AsYouType(selectedCountry.code_2).input(newValue));
+                        field.onChange(new AsYouType(selectedCountryInfo?.code_2).input(newValue));
                       }}
                       type="tel"
                       error={form.formState.errors.phone !== undefined}

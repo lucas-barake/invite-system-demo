@@ -1,9 +1,6 @@
 import { z } from "zod";
 import { parsePhoneNumberWithError } from "libphonenumber-js/min";
-import {
-  countriesWithCodes,
-  type CountryWithCode,
-} from "@/app/_lib/components/header/user-dropdown-menu/settings-modal/update-phone-modal/countries-with-code";
+import { countriesWithCodes } from "@/app/_lib/components/header/user-dropdown-menu/settings-modal/update-phone-modal/countries-with-code";
 import { createManyUnion } from "@/lib/utils/zod/create-many-union";
 
 const countryCodes = countriesWithCodes.map((c) => c.code_2);
@@ -74,11 +71,17 @@ export function parseStringPhoneNumber(phoneNumber: unknown): ParseStringPhoneNu
       };
     }
     const parsedPhoneNumber = parsePhoneNumberWithError(phoneNumber);
+    if (parsedPhoneNumber.country === undefined) {
+      return {
+        success: false,
+        error: "Invalid phone number",
+      };
+    }
     return {
       success: true,
       data: {
         phoneNumber: formatPhoneNumberInternational(parsedPhoneNumber),
-        countryCode: parsedPhoneNumber.country as CountryWithCode["code_2"],
+        countryCode: parsedPhoneNumber.country,
       },
     };
   } catch (error: unknown) {
