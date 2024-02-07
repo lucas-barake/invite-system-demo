@@ -1,13 +1,13 @@
 import { create } from "zustand";
 import { type MeQueryResult } from "@/server/api/routers/auth/auth.types";
 
-export type Session = {
+export type ClientSession = {
   data: MeQueryResult | null;
   status: "authenticated" | "unauthenticated" | "loading";
   update: (data: MeQueryResult | null) => void;
 };
 
-export const useSessionStore = create<Session>((set) => ({
+export const useSessionStore = create<ClientSession>((set) => ({
   data: null,
   status: "loading",
   update(data: MeQueryResult | null) {
@@ -23,7 +23,7 @@ export type UseSessionReturn = {
   status: "authenticated" | "unauthenticated" | "loading";
   update: (data: MeQueryResult | null) => void;
 };
-export function useSession(options?: UseSessionOptions): Session {
+export function useSession(options?: UseSessionOptions): ClientSession {
   const sessionStore = useSessionStore();
   return {
     data: sessionStore.data,
