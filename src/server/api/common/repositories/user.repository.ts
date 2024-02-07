@@ -33,7 +33,6 @@ class UserRepository {
     id: User["id"],
     options?: { includeSensitiveInfo?: T; bypassCache?: boolean }
   ): Promise<(T extends true ? Session["user"] : User) | null> {
-    // Default options if not provided
     const { includeSensitiveInfo = false, bypassCache = false } = options ?? {};
 
     if (!bypassCache) {

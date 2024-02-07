@@ -143,7 +143,6 @@ export const protectedRateLimitedProcedure = (
   return protectedProcedure.use(async (opts) => {
     let config: RateLimitConfig;
 
-    // Adjusted to pass the entire opts object to the function
     if (typeof configOrFn === "function") {
       const result = configOrFn({ ...opts.ctx, session: opts.ctx.session });
 
