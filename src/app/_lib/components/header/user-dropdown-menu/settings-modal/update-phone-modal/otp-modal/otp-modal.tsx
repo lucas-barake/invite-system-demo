@@ -15,8 +15,8 @@ import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import { handleToastError } from "@/components/ui/toaster";
 import { useSession } from "@/lib/stores/session-store";
-import { TRPCError } from "@trpc/server";
 import { FieldError } from "@/components/ui/field-error";
+import { isTRPCClientErrorWithCode } from "@/lib/utils/is-trpc-client-error-with-code";
 
 type Props = {
   phone: VerifyPhoneInput["phone"];
@@ -62,7 +62,7 @@ export const OtpModal: React.FC<Props> = ({ phone, open, onOpenChange, closePare
       form.reset();
     },
     onError(error) {
-      if (error instanceof TRPCError && error.code === "BAD_REQUEST") {
+      if (isTRPCClientErrorWithCode(error) && error.data.code === "BAD_REQUEST") {
         form.reset();
       }
     },

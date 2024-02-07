@@ -65,7 +65,7 @@ class PhoneService {
 
     if (input.otp !== otpFromRedis) {
       throw new TRPCError({
-        code: "FORBIDDEN",
+        code: "BAD_REQUEST",
         message: "Invalid OTP provided",
       });
     }

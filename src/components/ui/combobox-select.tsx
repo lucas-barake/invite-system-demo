@@ -55,7 +55,10 @@ export const ComboboxSelect: React.FC<ComboboxProps> = ({
             {options.map((option) => (
               <Command.Item
                 key={option.value}
-                onSelect={onValueChange}
+                onSelect={(val) => {
+                  onValueChange(val);
+                  setOpen(false);
+                }}
                 className="cursor-pointer"
                 value={option.value}
               >

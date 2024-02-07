@@ -50,13 +50,14 @@ export const SettingsModal: React.FC<Props> = ({ open, onOpenChange }) => {
           <div className="flex flex-col gap-1">
             <span className="text-sm font-semibold">Phone Number</span>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <span>
                 {session.data?.user.phoneNumber !== undefined &&
                 session.data?.user.phoneNumber !== null
                   ? parsePhoneNumber(session.data.user.phoneNumber).formatInternational()
                   : "No phone number"}
               </span>
+
               <Button
                 type="button"
                 variant="secondary"
@@ -68,12 +69,12 @@ export const SettingsModal: React.FC<Props> = ({ open, onOpenChange }) => {
                 {session.data?.user.phoneNumber === null ? (
                   <React.Fragment>
                     Add
-                    <PlusIcon className="ml-1 size-4" />
+                    <PlusIcon className="ml-2 size-4" />
                   </React.Fragment>
                 ) : (
                   <React.Fragment>
                     Edit
-                    <Edit className="ml-1 size-4" />
+                    <Edit className="ml-2 size-4" />
                   </React.Fragment>
                 )}
               </Button>

@@ -56,10 +56,12 @@ export const UpdatePhoneModal: React.FC<Props> = ({ open, onOpenChange }) => {
     value: selectedCountryInfo.code_2,
   };
   const countryOptions = React.useMemo(() => {
-    return countriesWithCodes.map((item) => ({
-      label: `${item.emoji} ${item.name_en} (${item.dial_code})`,
-      value: item.code_2,
-    }));
+    return countriesWithCodes
+      .sort((a, b) => a.name_en.localeCompare(b.name_en))
+      .map((item) => ({
+        label: `${item.emoji} ${item.name_en} (${item.dial_code})`,
+        value: item.code_2,
+      }));
   }, []);
 
   const apiUtils = api.useUtils();
