@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useSession } from "@/lib/stores/session-store";
+import { useSessionStore } from "@/lib/stores/session-store";
 import { type MeQueryResult } from "@/server/api/routers/auth/auth.types";
 
 type Props = {
@@ -13,7 +13,7 @@ export const UserStoreInitializer: React.FC<Props> = ({ user }) => {
 
   if (!initialized.current) {
     initialized.current = true;
-    useSession.setState({
+    useSessionStore.setState({
       data: user,
       status: user !== null ? "authenticated" : "unauthenticated",
     });

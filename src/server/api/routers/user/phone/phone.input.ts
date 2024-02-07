@@ -15,14 +15,16 @@ const countryCode = createManyUnion(
   }
 );
 
+function formatPhoneNumberInternational(
+  phoneNumber: ReturnType<typeof parsePhoneNumberWithError>
+): string {
+  return phoneNumber.formatInternational().replace(/\s+/g, "");
+}
+
 export const sendPhoneOtpInput = z.object({
   phone: z
     .object({
-      phoneNumber: z
-        .string()
-        .trim()
-        .min(2, { message: "The phone number is too short" })
-        .regex(/^[^+]*$/, { message: "Phone number should not start with a '+'" }),
+      phoneNumber: z.string().trim().min(2, { message: "The phone number is too short" }),
       countryCode,
     })
     .refine(
@@ -40,7 +42,9 @@ export const sendPhoneOtpInput = z.object({
       }
     )
     .transform((v) => ({
-      phoneNumber: parsePhoneNumberWithError(v.phoneNumber, v.countryCode).nationalNumber,
+      phoneNumber: formatPhoneNumberInternational(
+        parsePhoneNumberWithError(v.phoneNumber, v.countryCode)
+      ),
       countryCode: v.countryCode,
     })),
 });
@@ -73,7 +77,7 @@ export function parseStringPhoneNumber(phoneNumber: unknown): ParseStringPhoneNu
     return {
       success: true,
       data: {
-        phoneNumber: parsedPhoneNumber.nationalNumber,
+        phoneNumber: formatPhoneNumberInternational(parsedPhoneNumber),
         countryCode: parsedPhoneNumber.country as CountryWithCode["code_2"],
       },
     };

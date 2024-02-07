@@ -15,12 +15,14 @@ export class Logger {
   ): void {
     if (env.NODE_ENV !== "production" || type === "log" || type === "error") {
       const prefix = colorFn(`[${type.toUpperCase()} - ${new Date().toISOString()} - ${name}]:`);
-      console.log(`${prefix} ${typeof message === "string" ? message : JSON.stringify(message)}`);
+      console.log(
+        `\n${prefix} ${typeof message === "string" ? message : JSON.stringify(message)}\n`
+      );
     }
   }
 
   public log(message: unknown): void {
-    Logger.logMessage("log", this.name, message, pc.cyan);
+    Logger.logMessage("log", this.name, message, pc.green);
   }
 
   public debug(message: unknown): void {
@@ -32,7 +34,7 @@ export class Logger {
   }
 
   public info(message: unknown): void {
-    Logger.logMessage("info", this.name, message, pc.green);
+    Logger.logMessage("info", this.name, message, pc.cyan);
   }
 
   public static log(name: string, message: unknown): void {

@@ -1,0 +1,16 @@
+export enum TimeInSeconds {
+  OneMinute = 60,
+  TwoMinutes = 120,
+  ThreeMinutes = 180,
+  FourMinutes = 240,
+  FiveMinutes = 300,
+  TenMinutes = 600,
+  FifteenMinutes = 900,
+  ThirtyMinutes = 1800,
+  OneHour = 3600,
+  TwoHours = 7200,
+  OneDay = 86400,
+  TwoDays = 172800,
+  OneWeek = 604800,
+  TwoWeeks = 1209600,
+}

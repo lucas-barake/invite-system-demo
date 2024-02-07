@@ -1,49 +1,56 @@
 import { db } from "@/server/database";
 import { redis } from "@/server/redis";
 import { type Session } from "@/server/api/routers/auth/auth.types";
-
-const USER_INFO_PREFIX = "user-info:";
-
-export function getUserInfoKey(userId: string): string {
-  return `${USER_INFO_PREFIX}${userId}`;
-}
+import { DateTime } from "luxon";
+import { PostgresError } from "@/server/api/common/enums/postgres-error.enum";
+import { DatabaseError } from "pg";
+import { TRPCError } from "@trpc/server";
 
 export type User = Pick<Session["user"], "id" | "name" | "email" | "imageUrl">;
 
-export const userRepository = {
-  async cacheUserInfo(userId: User["id"], user: User): Promise<void> {
-    const userKey = getUserInfoKey(userId);
+class UserRepository {
+  private getUserInfoKey(userId: string): string {
+    return `user-info:${userId}`;
+  }
+
+  private async cacheUserInfo(userId: User["id"], user: User): Promise<void> {
+    const userKey = this.getUserInfoKey(userId);
     await redis.set(
       userKey,
       JSON.stringify(user),
       "EX",
       60 * 60 * 24 * 7 // 7 days in seconds
     );
-  },
+  }
 
-  async getCachedUserInfo(id: Session["user"]["id"]): Promise<Session["user"] | null> {
-    const userKey = getUserInfoKey(id);
+  private async getCachedUserInfo(id: Session["user"]["id"]): Promise<Session["user"] | null> {
+    const userKey = this.getUserInfoKey(id);
     const cachedUserInfo = await redis.get(userKey);
     return cachedUserInfo !== null ? (JSON.parse(cachedUserInfo) as Session["user"]) : null;
-  },
+  }
 
-  async getUserById<T extends boolean = false>(
+  public async getUserById<T extends boolean = false>(
     id: User["id"],
-    includeSensitiveInfo?: T
+    options?: { includeSensitiveInfo?: T; bypassCache?: boolean }
   ): Promise<(T extends true ? Session["user"] : User) | null> {
-    const cachedUserInfo = await this.getCachedUserInfo(id);
-    if (cachedUserInfo !== null) {
-      if (includeSensitiveInfo === true) {
-        return cachedUserInfo;
+    // Default options if not provided
+    const { includeSensitiveInfo = false, bypassCache = false } = options ?? {};
+
+    if (!bypassCache) {
+      const cachedUserInfo = await this.getCachedUserInfo(id);
+      if (cachedUserInfo !== null) {
+        if (includeSensitiveInfo === true) {
+          return cachedUserInfo;
+        }
+        return {
+          email: cachedUserInfo.email,
+          imageUrl: cachedUserInfo.imageUrl,
+          name: cachedUserInfo.name,
+          id: cachedUserInfo.id,
+        } satisfies User as T extends true ? Session["user"] : User;
       }
-      return {
-        email: cachedUserInfo.email,
-        imageUrl: cachedUserInfo.imageUrl,
-        name: cachedUserInfo.name,
-        id: cachedUserInfo.id,
-        // Make TypeScript happy
-      } satisfies User as T extends true ? Session["user"] : User;
     }
+
     const userQuery = await db
       .selectFrom("users")
       .select(
@@ -53,13 +60,14 @@ export const userRepository = {
       )
       .where("id", "=", id)
       .executeTakeFirst();
+
     if (userQuery !== undefined) {
       void this.cacheUserInfo(userQuery.id, userQuery);
     }
     return userQuery ?? null;
-  },
+  }
 
-  async upsertUser(data: {
+  public async upsertUser(data: {
     onCreate: Pick<User, "name" | "imageUrl" | "email">;
     onUpdate: Pick<User, "name" | "imageUrl">;
   }): Promise<Session["user"] | null> {
@@ -85,5 +93,48 @@ export const userRepository = {
     }
 
     return result ?? null;
-  },
-};
+  }
+
+  public async updateUserPhoneNumber(
+    userId: string,
+    phoneNumber: string
+  ): Promise<Session["user"]> {
+    try {
+      await db
+        .updateTable("users")
+        .set({
+          phoneNumber,
+          phoneVerified: DateTime.now().toUTC().toISO(),
+        })
+        .where("id", "=", userId)
+        .execute();
+    } catch (error) {
+      if (error instanceof DatabaseError && error.code === PostgresError.UNIQUE_VIOLATION) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Phone number already in use",
+        });
+      }
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to update phone number",
+      });
+    }
+
+    const updatedUser = await this.getUserById(userId, {
+      includeSensitiveInfo: true,
+      bypassCache: true,
+    });
+    if (updatedUser === null) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to retrieve updated user",
+      });
+    }
+
+    await this.cacheUserInfo(userId, updatedUser);
+    return updatedUser;
+  }
+}
+
+export const userRepository = new UserRepository();

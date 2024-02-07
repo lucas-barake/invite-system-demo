@@ -7,7 +7,7 @@ export type RateLimitConfig = {
   maxRequests: number;
   per: [number, WindowType];
   uniqueId: string;
-  enabled: boolean;
+  enabled?: boolean;
 };
 export type RateLimitOptions = Record<string, RateLimitConfig>;
 
@@ -29,7 +29,7 @@ function convertToSeconds(amount: number, type: WindowType): number {
 }
 
 export async function rateLimit(session: Session, args: RateLimitConfig): Promise<void> {
-  if (!args.enabled) {
+  if (args.enabled === false) {
     return;
   }
 

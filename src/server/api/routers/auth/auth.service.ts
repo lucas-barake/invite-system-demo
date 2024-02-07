@@ -14,73 +14,77 @@ export function getSessionTokensKey(userId: string): string {
   return `${SESSION_TOKENS_PREFIX}${userId}`;
 }
 
-async function addUserSession(
-  userId: User["id"],
-  sessionToken: string,
-  expiresIn: number
-): Promise<void> {
-  const sessionKey = getSessionTokensKey(userId);
-  const score = Math.floor(Date.now() / 1000) + expiresIn; // Current time + expiration time in seconds
-
-  const pipeline = redis.multi();
-  pipeline.zadd(sessionKey, score.toString(), sessionToken);
-  pipeline.zcount(sessionKey, "-inf", "+inf");
-  pipeline.expire(sessionKey, expiresIn);
-
-  const results = await pipeline.exec();
-  const sessionTokensCount = results?.[1]?.[1];
-  if (
-    !Array.isArray(results) ||
-    results.some((result) => result[0] !== null) ||
-    typeof sessionTokensCount !== "number"
-  ) {
-    // TODO: Logging
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "Failed to add user session",
-    });
+class AuthService {
+  public getSessionTokensKey(userId: string): string {
+    return `${SESSION_TOKENS_PREFIX}${userId}`;
   }
 
-  const SESSIONS_TOKEN_LIMIT = 8;
-  if (sessionTokensCount > SESSIONS_TOKEN_LIMIT) {
-    const tokensToRemove = sessionTokensCount - 8;
-    pipeline.zremrangebyrank(sessionKey, 0, tokensToRemove - 1);
+  private async addUserSession(
+    userId: User["id"],
+    sessionToken: string,
+    expiresIn: number
+  ): Promise<void> {
+    const sessionKey = this.getSessionTokensKey(userId);
+    const score = Math.floor(Date.now() / 1000) + expiresIn; // Current time + expiration time in seconds
+
+    const pipeline = redis.multi();
+    pipeline.zadd(sessionKey, score.toString(), sessionToken);
+    pipeline.zcount(sessionKey, "-inf", "+inf");
+    pipeline.expire(sessionKey, expiresIn);
+
+    const results = await pipeline.exec();
+    const sessionTokensCount = results?.[1]?.[1];
+    if (
+      !Array.isArray(results) ||
+      results.some((result) => result[0] !== null) ||
+      typeof sessionTokensCount !== "number"
+    ) {
+      // TODO: Logging
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to add user session",
+      });
+    }
+
+    const SESSIONS_TOKEN_LIMIT = 8;
+    if (sessionTokensCount > SESSIONS_TOKEN_LIMIT) {
+      const tokensToRemove = sessionTokensCount - 8;
+      pipeline.zremrangebyrank(sessionKey, 0, tokensToRemove - 1);
+    }
+
+    await pipeline.exec();
   }
 
-  await pipeline.exec();
-}
-
-async function deleteSessionToken(args: {
-  userId: User["id"];
-  sessionToken: string;
-}): Promise<void> {
-  const sessionKey = getSessionTokensKey(args.userId);
-  await redis.zrem(sessionKey, args.sessionToken);
-}
-
-async function checkSessionTokenValidity(
-  userId: User["id"],
-  sessionToken: string
-): Promise<boolean> {
-  const sessionKey = getSessionTokensKey(userId);
-  const score = await redis.zscore(sessionKey, sessionToken);
-  const currentTimestamp = Math.floor(Date.now() / 1000);
-  if (score !== null && parseInt(score, 10) > currentTimestamp) {
-    return true;
+  private async deleteSessionToken(args: {
+    userId: User["id"];
+    sessionToken: string;
+  }): Promise<void> {
+    const sessionKey = this.getSessionTokensKey(args.userId);
+    await redis.zrem(sessionKey, args.sessionToken);
   }
 
-  await redis.zrem(sessionKey, sessionToken);
-  return false;
-}
+  private async checkSessionTokenValidity(
+    userId: User["id"],
+    sessionToken: string
+  ): Promise<boolean> {
+    const sessionKey = this.getSessionTokensKey(userId);
+    const score = await redis.zscore(sessionKey, sessionToken);
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    if (score !== null && parseInt(score, 10) > currentTimestamp) {
+      return true;
+    }
 
-async function generateSessionToken(userId: Session["user"]["id"]): Promise<string> {
-  const rawToken = `${userId}-${Date.now()}-${Math.random()}`;
-  const hashedToken = await argon2.hash(rawToken);
-  return hashedToken;
-}
+    await redis.zrem(sessionKey, sessionToken);
+    return false;
+  }
 
-export const authService = {
-  async login(accessToken: string, headers: Headers): Promise<MeQueryResult> {
+  private async generateSessionToken(userId: Session["user"]["id"]): Promise<string> {
+    const rawToken = `${userId}-${Date.now()}-${Math.random()}`;
+    const hashedToken = await argon2.hash(rawToken);
+    return hashedToken;
+  }
+
+  public async login(accessToken: string, headers: Headers): Promise<MeQueryResult> {
     try {
       const verifiedToken = await admin.auth().verifyIdToken(accessToken);
       if (verifiedToken.email === undefined) {
@@ -110,8 +114,8 @@ export const authService = {
       }
 
       const expiresIn = 60 * 60 * 24 * 5; // 5 days in seconds
-      const sessionToken = await generateSessionToken(userInfo.id);
-      await addUserSession(userInfo.id, sessionToken, expiresIn);
+      const sessionToken = await this.generateSessionToken(userInfo.id);
+      await this.addUserSession(userInfo.id, sessionToken, expiresIn);
 
       createSecureCookie({
         headers,
@@ -144,10 +148,10 @@ export const authService = {
         message: "Failed to login",
       });
     }
-  },
+  }
 
-  async logout(args: { session: Session; headers: Headers }): Promise<void> {
-    await deleteSessionToken({
+  public async logout(args: { session: Session; headers: Headers }): Promise<void> {
+    await this.deleteSessionToken({
       userId: args.session.user.id,
       sessionToken: args.session.sessionToken,
     });
@@ -161,9 +165,12 @@ export const authService = {
       headers: args.headers,
       name: USER_ID_COOKIE_KEY,
     });
-  },
+  }
 
-  async validateSessionToken(args: { encodedSessionToken: string; userId: User["id"] }): Promise<
+  public async validateSessionToken(args: {
+    encodedSessionToken: string;
+    userId: User["id"];
+  }): Promise<
     | {
         success: true;
         userInfo: Session["user"] | null;
@@ -174,7 +181,10 @@ export const authService = {
       }
   > {
     const decodedSessionToken = decodeURIComponent(args.encodedSessionToken);
-    const isSessionTokenValid = await checkSessionTokenValidity(args.userId, decodedSessionToken);
+    const isSessionTokenValid = await this.checkSessionTokenValidity(
+      args.userId,
+      decodedSessionToken
+    );
 
     if (!isSessionTokenValid) {
       return {
@@ -184,8 +194,12 @@ export const authService = {
 
     return {
       success: true,
-      userInfo: await userRepository.getUserById(args.userId, true),
+      userInfo: await userRepository.getUserById(args.userId, {
+        includeSensitiveInfo: true,
+      }),
       sessionToken: decodedSessionToken,
     };
-  },
-};
+  }
+}
+
+export const authService = new AuthService();

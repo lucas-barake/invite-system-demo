@@ -7,10 +7,30 @@ export type Session = {
   update: (data: MeQueryResult | null) => void;
 };
 
-export const useSession = create<Session>((set) => ({
+export const useSessionStore = create<Session>((set) => ({
   data: null,
   status: "loading",
   update(data: MeQueryResult | null) {
     set({ data, status: data !== null ? "authenticated" : "unauthenticated" });
   },
 }));
+
+export type UseSessionOptions = {
+  onUpdate?: (data: MeQueryResult | null) => void;
+};
+export type UseSessionReturn = {
+  data: MeQueryResult | null;
+  status: "authenticated" | "unauthenticated" | "loading";
+  update: (data: MeQueryResult | null) => void;
+};
+export function useSession(options?: UseSessionOptions): Session {
+  const sessionStore = useSessionStore();
+  return {
+    data: sessionStore.data,
+    status: sessionStore.status,
+    update(data) {
+      sessionStore.update(data);
+      options?.onUpdate?.(data);
+    },
+  };
+}
