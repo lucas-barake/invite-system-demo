@@ -122,9 +122,6 @@ dependencies:
   react-timer-hook:
     specifier: ^3.0.7
     version: 3.0.7(react@18.2.0)
-  react-virtuoso:
-    specifier: ^4.6.3
-    version: 4.6.3(react-dom@18.2.0)(react@18.2.0)
   server-only:
     specifier: ^0.0.1
     version: 0.0.1
@@ -140,9 +137,6 @@ dependencies:
   tailwindcss-animate:
     specifier: ^1.0.7
     version: 1.0.7(tailwindcss@3.4.1)
-  virtua:
-    specifier: ^0.23.3
-    version: 0.23.3(react-dom@18.2.0)(react@18.2.0)
   zod:
     specifier: ^3.22.4
     version: 3.22.4
@@ -5338,17 +5332,6 @@ packages:
       react: 18.2.0
     dev: false
 
-  /react-virtuoso@4.6.3(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-NcoSsf4B0OCx7U8i2s+VWe8b9e+FWzcN/5ly4hKjErynBzGONbWORZ1C5amUlWrPi6+HbUQ2PjnT4OpyQIpP9A==}
-    engines: {node: '>=10'}
-    peerDependencies:
-      react: '>=16 || >=17 || >= 18'
-      react-dom: '>=16 || >=17 || >= 18'
-    dependencies:
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
-    dev: false
-
   /react@18.2.0:
     resolution: {integrity: sha512-/3IjMdb2L9QbBdWiW5e3P2/npwMBaU9mHCSCUzNln0ZCYbcfTsGbTJrU/kGemdH2IWmB2ioZ+zkxtmq6g09fGQ==}
     engines: {node: '>=0.10.0'}
@@ -6057,27 +6040,6 @@ packages:
   /uuid@9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
     hasBin: true
-    dev: false
-
-  /virtua@0.23.3(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-B9jKatcits94r5K2wwEA5y7a/Ht2I6kl1yBzy/rmhAEvanG9x/6n2CCer/oa5L0pTabY4TiaZsfVms2RVlJ4Rw==}
-    peerDependencies:
-      react: '>=16.14.0'
-      react-dom: '>=16.14.0'
-      solid-js: '>=1.0'
-      vue: '>=3.2'
-    peerDependenciesMeta:
-      react:
-        optional: true
-      react-dom:
-        optional: true
-      solid-js:
-        optional: true
-      vue:
-        optional: true
-    dependencies:
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
     dev: false
 
   /webidl-conversions@3.0.1:
