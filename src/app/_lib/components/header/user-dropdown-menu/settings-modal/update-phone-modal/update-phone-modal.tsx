@@ -134,11 +134,6 @@ export const UpdatePhoneModal: React.FC<Props> = ({ open, onOpenChange }) => {
                   );
                   if (newCountry !== undefined) {
                     form.setValue("phone.countryCode", newCountry.code_2);
-                    console.log({
-                      newCountry,
-                      value,
-                      formValues: form.getValues(),
-                    });
                   }
                 }}
               />
