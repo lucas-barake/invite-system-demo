@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { handleToastError } from "@/components/ui/toaster";
 import { useSession } from "@/lib/stores/session-store";
 import { TRPCError } from "@trpc/server";
+import { FieldError } from "@/components/ui/field-error";
 
 type Props = {
   phone: VerifyPhoneInput["phone"];
@@ -127,11 +128,10 @@ export const OtpModal: React.FC<Props> = ({ phone, open, onOpenChange, closePare
             )}
           />
 
-          {form.formState.errors.otp !== undefined && (
-            <span className="text-center text-sm font-bold text-destructive">
-              {form.formState.errors.otp.message}
-            </span>
-          )}
+          <FieldError
+            message={form.formState.errors.otp?.message}
+            className="text-center font-bold"
+          />
 
           {timer.isRunning && (
             <p className="mx-auto text-center text-sm text-muted-foreground">

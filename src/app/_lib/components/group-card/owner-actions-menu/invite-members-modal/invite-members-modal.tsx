@@ -19,6 +19,7 @@ import {
   type SendGroupInviteInputType,
 } from "@/server/api/routers/groups/group-invites/group-invites.input";
 import { PendingInvitee } from "@/app/_lib/components/group-card/owner-actions-menu/invite-members-modal/pending-invitee";
+import { FieldError } from "@/components/ui/field-error";
 
 type Props = {
   open: boolean;
@@ -116,9 +117,7 @@ export const InviteMembersModal: React.FC<Props> = ({ open, onOpenChange, group 
             </Button>
           </div>
 
-          {form.formState.errors.email !== undefined && (
-            <p className="text-destructive">{form.formState.errors.email?.message}</p>
-          )}
+          <FieldError message={form.formState.errors.email?.message} />
         </form>
 
         {group.members.length > 0 && (

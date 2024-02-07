@@ -18,6 +18,7 @@ import { TRPCError } from "@trpc/server";
 import { handleToastError } from "@/components/ui/toaster";
 import { type ComboboxOption, ComboboxSelect } from "@/components/ui/combobox-select";
 import { stringUtils } from "@/lib/utils/string-utils";
+import { FieldError } from "@/components/ui/field-error";
 
 type Props = {
   open: boolean;
@@ -171,9 +172,7 @@ export const UpdatePhoneModal: React.FC<Props> = ({ open, onOpenChange }) => {
               />
             </div>
 
-            {form.formState.errors.phone !== undefined && (
-              <p className="text-destructive">{form.formState.errors.phone.phoneNumber?.message}</p>
-            )}
+            <FieldError message={form.formState.errors.phone?.phoneNumber?.message} />
 
             <Dialog.Footer>
               <Button type="submit" className="ml-1" disabled={!form.formState.isValid}>
