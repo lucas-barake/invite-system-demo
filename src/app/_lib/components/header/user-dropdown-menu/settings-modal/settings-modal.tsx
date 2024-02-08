@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { UpdatePhoneModal } from "src/app/_lib/components/header/user-dropdown-menu/settings-modal/update-phone-modal";
 import { Edit, PlusIcon } from "lucide-react";
 import { parsePhoneNumber } from "libphonenumber-js/min";
+import { Badge } from "@/components/ui/badge";
 
 type Props = {
   open: boolean;
@@ -14,6 +15,8 @@ type Props = {
 
 export const SettingsModal: React.FC<Props> = ({ open, onOpenChange }) => {
   const session = useSession();
+  const hasPhoneNumber =
+    session.data?.user.phoneNumber !== undefined && session.data?.user.phoneNumber !== null;
   const [showPhoneModal, setShowPhoneModal] = React.useState(false);
 
   function handlePhoneModalOpenChange(newOpen: boolean): void {
@@ -51,12 +54,15 @@ export const SettingsModal: React.FC<Props> = ({ open, onOpenChange }) => {
             <span className="text-sm font-semibold">Phone Number</span>
 
             <div className="flex items-center gap-3">
-              <span>
-                {session.data?.user.phoneNumber !== undefined &&
-                session.data?.user.phoneNumber !== null
-                  ? parsePhoneNumber(session.data.user.phoneNumber).formatInternational()
-                  : "No phone number"}
-              </span>
+              <div className="flex items-center gap-1.5">
+                {hasPhoneNumber && <Badge variant="success">Verified</Badge>}
+                <span>
+                  {hasPhoneNumber
+                    ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                      parsePhoneNumber(session.data!.user.phoneNumber!).formatInternational()
+                    : "No phone number"}
+                </span>
+              </div>
 
               <Button
                 type="button"

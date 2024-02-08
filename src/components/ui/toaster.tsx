@@ -31,7 +31,7 @@ export const Toaster: React.FC<ToasterProps> = ({ ...props }) => {
           closeButton:
             "group-[.toast]:size-5 group-[.toast]:bg-muted group-[.toast]:text-foreground group-[.toast]:border-0 group-[.toast]:hover:!bg-destructive group-[.toast]:hover:!text-destructive-foreground",
           error: "group-[.toaster]:text-destructive",
-          success: "group-[.toaster]:text-success",
+          success: "group-[.toaster]:text-success-text",
         },
         duration: 5000,
       }}
