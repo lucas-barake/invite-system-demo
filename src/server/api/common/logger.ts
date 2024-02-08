@@ -10,7 +10,7 @@ export class Logger {
 
   private static logMessage(
     type: "log" | "debug" | "info" | "error",
-    name: string,
+    context: string,
     messages: unknown[],
     colorFn: (s: string) => string
   ): void {
@@ -18,7 +18,7 @@ export class Logger {
       const prefix = colorFn(
         `[${type.toUpperCase()} - ${DateTime.now().toLocaleString(
           DateTime.DATETIME_FULL
-        )} - ${name}]:`
+        )} - ${pc.yellow(context)}]:`
       );
       console.log(prefix, ...messages);
     }
@@ -40,19 +40,19 @@ export class Logger {
     Logger.logMessage("info", this.name, messages, pc.cyan);
   }
 
-  public static log(name: string, ...messages: unknown[]): void {
-    this.logMessage("log", name, messages, pc.green);
+  public static log(context: string, ...messages: unknown[]): void {
+    this.logMessage("log", context, messages, pc.green);
   }
 
-  public static debug(name: string, ...messages: unknown[]): void {
-    this.logMessage("debug", name, messages, pc.orange);
+  public static debug(context: string, ...messages: unknown[]): void {
+    this.logMessage("debug", context, messages, pc.orange);
   }
 
-  public static error(name: string, ...messages: unknown[]): void {
-    this.logMessage("error", name, messages, pc.red);
+  public static error(context: string, ...messages: unknown[]): void {
+    this.logMessage("error", context, messages, pc.red);
   }
 
-  public static info(name: string, ...messages: unknown[]): void {
-    this.logMessage("info", name, messages, pc.cyan);
+  public static info(context: string, ...messages: unknown[]): void {
+    this.logMessage("info", context, messages, pc.cyan);
   }
 }

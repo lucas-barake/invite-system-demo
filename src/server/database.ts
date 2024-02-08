@@ -3,6 +3,7 @@ import { Kysely, PostgresDialect } from "kysely";
 import { type DB } from "kysely-codegen";
 import { env } from "@/env";
 import pc from "@/server/api/common/pc";
+import { Logger } from "@/server/api/common/logger";
 
 const globalForDb = globalThis as unknown as { db: Kysely<DB> | undefined };
 
@@ -26,8 +27,8 @@ function createDbClient(): Kysely<DB> {
                 : pc.red("UNKNOWN");
             });
 
-            const kyselyLabel = pc.yellow(`[Kysely (${event.queryDurationMillis.toFixed(2)}ms)]`);
-            console.debug(`\n${kyselyLabel} ${formattedSql}\n`);
+            const label = `Kysely (${event.queryDurationMillis.toFixed(2)} ms)`;
+            Logger.debug(label, formattedSql);
           }
         : undefined,
   });
