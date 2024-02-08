@@ -17,6 +17,7 @@ export type ComboboxProps = {
   onValueChange: (value: ComboboxOption["value"]) => void;
   placeholder: string;
   defaultValue: string;
+  filter?: (value: string, search: string) => boolean;
 };
 
 export const ComboboxSelect: React.FC<ComboboxProps> = ({
@@ -27,6 +28,7 @@ export const ComboboxSelect: React.FC<ComboboxProps> = ({
   placeholder,
   defaultValue,
   buttonLabel,
+  filter,
 }) => {
   const [open, setOpen] = React.useState(false);
 
@@ -46,7 +48,12 @@ export const ComboboxSelect: React.FC<ComboboxProps> = ({
       </Popover.Trigger>
 
       <Popover.Content className="w-[300px] p-0">
-        <Command defaultValue={defaultValue}>
+        <Command
+          defaultValue={defaultValue}
+          filter={
+            filter !== undefined ? (value, search) => (filter(value, search) ? 1 : 0) : undefined
+          }
+        >
           <Command.Input placeholder={placeholder} />
 
           <Command.Empty>{emptyLabel}</Command.Empty>

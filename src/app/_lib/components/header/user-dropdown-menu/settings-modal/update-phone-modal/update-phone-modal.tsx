@@ -138,6 +138,15 @@ export const UpdatePhoneModal: React.FC<Props> = ({ open, onOpenChange }) => {
                     form.setValue("phone.countryCode", newCountry.code_2);
                   }
                 }}
+                filter={(value, search) => {
+                  const currentCountry = countriesWithCodes.find(
+                    (country) =>
+                      stringUtils.normalize(country.code_2) === stringUtils.normalize(value)
+                  );
+                  return currentCountry !== undefined
+                    ? currentCountry.name_en.toLowerCase().includes(search.toLowerCase())
+                    : false;
+                }}
               />
 
               <Controller
