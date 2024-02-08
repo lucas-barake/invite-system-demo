@@ -51,11 +51,17 @@ export const SettingsModal: React.FC<Props> = ({ open, onOpenChange }) => {
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-sm font-semibold">Phone Number</span>
+            <span className="flex items-center gap-2 text-sm font-semibold">
+              Phone Number
+              {hasPhoneNumber && (
+                <Badge className="h-5" variant="outline">
+                  Verified
+                </Badge>
+              )}
+            </span>
 
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
-                {hasPhoneNumber && <Badge variant="success">Verified</Badge>}
                 <span>
                   {hasPhoneNumber
                     ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -68,6 +74,7 @@ export const SettingsModal: React.FC<Props> = ({ open, onOpenChange }) => {
                 type="button"
                 variant="secondary"
                 size="sm"
+                className="h-7"
                 onClick={() => {
                   handlePhoneModalOpenChange(true);
                 }}
@@ -75,12 +82,12 @@ export const SettingsModal: React.FC<Props> = ({ open, onOpenChange }) => {
                 {session.data?.user.phoneNumber === null ? (
                   <React.Fragment>
                     Add
-                    <PlusIcon className="ml-2 size-4" />
+                    <PlusIcon className="ml-1.5 size-4" />
                   </React.Fragment>
                 ) : (
                   <React.Fragment>
                     Edit
-                    <Edit className="ml-2 size-4" />
+                    <Edit className="ml-1.5 size-4" />
                   </React.Fragment>
                 )}
               </Button>

@@ -13,6 +13,16 @@ export type CountryWithCode = {
 
 export const countriesWithCodes: [CountryWithCode, ...CountryWithCode[]] = [
   {
+    name_en: "United States",
+    continent_en: "North America",
+    capital_en: "Washington, D.C.",
+    dial_code: "+1",
+    code_2: "US",
+    tld: ".us",
+    emoji: "🇺🇸",
+    placeholder: "(555) 123-4567",
+  },
+  {
     name_en: "Colombia",
     continent_en: "South America",
     capital_en: "Bogota",
@@ -31,16 +41,6 @@ export const countriesWithCodes: [CountryWithCode, ...CountryWithCode[]] = [
     tld: ".mx",
     emoji: "🇲🇽",
     placeholder: "55 1234 5678",
-  },
-  {
-    name_en: "United States",
-    continent_en: "North America",
-    capital_en: "Washington, D.C.",
-    dial_code: "+1",
-    code_2: "US",
-    tld: ".us",
-    emoji: "🇺🇸",
-    placeholder: "(555) 123-4567",
   },
   {
     name_en: "Canada",
