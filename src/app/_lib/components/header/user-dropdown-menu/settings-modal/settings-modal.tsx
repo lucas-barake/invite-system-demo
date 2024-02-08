@@ -11,7 +11,6 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
-``;
 
 export const SettingsModal: React.FC<Props> = ({ open, onOpenChange }) => {
   const session = useSession();
