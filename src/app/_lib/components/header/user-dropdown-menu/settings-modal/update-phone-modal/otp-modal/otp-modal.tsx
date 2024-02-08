@@ -135,7 +135,7 @@ export const OtpModal: React.FC<Props> = ({ phone, open, onOpenChange, closePare
 
           {timer.isRunning && (
             <p className="mx-auto text-center text-sm text-muted-foreground">
-              The verificaton code will expire in {timer.minutes} minute
+              The verification code will expire in {timer.minutes} minute
               {timer.minutes === 1 ? "" : "s"} and {timer.seconds} second
               {timer.seconds === 1 ? "" : "s"}.
             </p>

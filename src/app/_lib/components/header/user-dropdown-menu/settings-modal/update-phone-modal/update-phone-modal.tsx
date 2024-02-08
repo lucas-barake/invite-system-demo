@@ -14,11 +14,11 @@ import { AsYouType } from "libphonenumber-js/min";
 import { OtpModal } from "@/app/_lib/components/header/user-dropdown-menu/settings-modal/update-phone-modal/otp-modal";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
-import { TRPCError } from "@trpc/server";
 import { handleToastError } from "@/components/ui/toaster";
 import { type ComboboxOption, ComboboxSelect } from "@/components/ui/combobox-select";
 import { stringUtils } from "@/lib/utils/string-utils";
 import { FieldError } from "@/components/ui/field-error";
+import { isTRPCClientErrorWithCode } from "@/lib/utils/is-trpc-client-error-with-code";
 
 type Props = {
   open: boolean;
@@ -55,7 +55,7 @@ export const UpdatePhoneModal: React.FC<Props> = ({ open, onOpenChange }) => {
     label: `${selectedCountryInfo.emoji} (${selectedCountryInfo.dial_code})`,
     value: selectedCountryInfo.code_2,
   };
-  const countryOptions = React.useMemo(() => {
+  const countryOptions: ComboboxOption[] = React.useMemo(() => {
     return countriesWithCodes
       .sort((a, b) => a.name_en.localeCompare(b.name_en))
       .map((item) => ({
@@ -92,7 +92,7 @@ export const UpdatePhoneModal: React.FC<Props> = ({ open, onOpenChange }) => {
         return "OTP sent!";
       },
       error(error) {
-        if (error instanceof TRPCError && error.code === "TOO_MANY_REQUESTS") {
+        if (isTRPCClientErrorWithCode(error) && error.data.code === "TOO_MANY_REQUESTS") {
           setShowOtpModal(true);
           setPhone(data.phone);
         }

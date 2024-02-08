@@ -78,7 +78,7 @@ export const SettingsModal: React.FC<Props> = ({ open, onOpenChange }) => {
                   handlePhoneModalOpenChange(true);
                 }}
               >
-                {session.data?.user.phoneNumber === null ? (
+                {!hasPhoneNumber ? (
                   <React.Fragment>
                     Add
                     <PlusIcon className="ml-1.5 size-4" />

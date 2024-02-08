@@ -34,8 +34,8 @@ class PhoneService {
 
     /* 
     try {
-      await smsService.sendMessage({ to: input.email, subject: "Verify your phone", body: `Your phone OTP is: ${fourDigitOtp}` });
-      this.logger.info(
+      await smsService.sendMessage({ to: input.phone, message: `Your OTP is: ${fourDigitOtp}` });
+      this.logger.debug(
         `Phone OTP for ${input.phone.countryCode}${input.phone.phoneNumber}: ${fourDigitOtp}`
       );
     } catch (error) {
@@ -48,7 +48,7 @@ class PhoneService {
     }
     */
 
-    this.logger.info(
+    this.logger.debug(
       `Phone OTP for ${input.phone.countryCode}${input.phone.phoneNumber}: ${fourDigitOtp}`
     );
   }
@@ -75,7 +75,7 @@ class PhoneService {
       input.phone.phoneNumber
     );
     void redis.del(redisKey);
-    this.logger.info(
+    this.logger.debug(
       `Phone number ${input.phone.countryCode}${input.phone.phoneNumber} verified successfully.`
     );
     return newUserInfo;

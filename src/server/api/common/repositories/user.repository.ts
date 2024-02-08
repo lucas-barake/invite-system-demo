@@ -5,10 +5,13 @@ import { DateTime } from "luxon";
 import { PostgresError } from "@/server/api/common/enums/postgres-error.enum";
 import { DatabaseError } from "pg";
 import { TRPCError } from "@trpc/server";
+import { Logger } from "@/server/api/common/logger";
 
 export type User = Pick<Session["user"], "id" | "name" | "email" | "imageUrl">;
 
 class UserRepository {
+  private readonly logger = new Logger(UserRepository.name);
+
   private getUserInfoKey(userId: string): string {
     return `user-info:${userId}`;
   }
@@ -38,9 +41,8 @@ class UserRepository {
     if (!bypassCache) {
       const cachedUserInfo = await this.getCachedUserInfo(id);
       if (cachedUserInfo !== null) {
-        if (includeSensitiveInfo === true) {
-          return cachedUserInfo;
-        }
+        if (includeSensitiveInfo) return cachedUserInfo;
+
         return {
           email: cachedUserInfo.email,
           imageUrl: cachedUserInfo.imageUrl,
@@ -53,7 +55,7 @@ class UserRepository {
     const userQuery = await db
       .selectFrom("users")
       .select(
-        includeSensitiveInfo === true
+        includeSensitiveInfo
           ? ["id", "name", "email", "imageUrl", "phoneNumber", "phoneVerified"]
           : ["id", "name", "email", "imageUrl"]
       )
@@ -114,6 +116,7 @@ class UserRepository {
           message: "Phone number already in use",
         });
       }
+      this.logger.error("Failed to update phone number", error);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to update phone number",
