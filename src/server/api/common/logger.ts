@@ -4,8 +4,8 @@ import { DateTime } from "luxon";
 import pc from "@/server/api/common/pc";
 
 export class Logger {
-  constructor(private readonly name: string) {
-    this.name = name;
+  constructor(private readonly context: string) {
+    this.context = context;
   }
 
   private static logMessage(
@@ -25,19 +25,19 @@ export class Logger {
   }
 
   public log(...messages: unknown[]): void {
-    Logger.logMessage("log", this.name, messages, pc.green);
+    Logger.logMessage("log", this.context, messages, pc.green);
   }
 
   public debug(...messages: unknown[]): void {
-    Logger.logMessage("debug", this.name, messages, pc.orange);
+    Logger.logMessage("debug", this.context, messages, pc.orange);
   }
 
   public error(...messages: unknown[]): void {
-    Logger.logMessage("error", this.name, messages, pc.red);
+    Logger.logMessage("error", this.context, messages, pc.red);
   }
 
   public info(...messages: unknown[]): void {
-    Logger.logMessage("info", this.name, messages, pc.cyan);
+    Logger.logMessage("info", this.context, messages, pc.cyan);
   }
 
   public static log(context: string, ...messages: unknown[]): void {
