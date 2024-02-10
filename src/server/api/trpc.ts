@@ -15,9 +15,12 @@ import {
   authService,
   SESSION_TOKEN_COOKIE_KEY,
   USER_ID_COOKIE_KEY,
-} from "@/server/api/routers/auth/auth.service";
+} from "@/server/api/routers/auth/service/auth.service";
 import { type Session } from "@/server/api/routers/auth/auth.types";
-import { rateLimit, type RateLimitConfig } from "@/server/api/common/middlewares/rate-limit";
+import {
+  type RateLimitConfig,
+  rateLimitMiddleware,
+} from "@/server/api/common/middlewares/rate-limit.middleware";
 
 /**
  * 1. CONTEXT
@@ -155,7 +158,7 @@ export const protectedRateLimitedProcedure = (
       config = configOrFn;
     }
 
-    await rateLimit(opts.ctx.session, config);
+    await rateLimitMiddleware(opts.ctx.session, config);
     return opts.next(opts);
   });
 };

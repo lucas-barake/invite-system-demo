@@ -2,8 +2,14 @@ import { Logger } from "@/server/api/common/logger";
 import { db } from "@/server/database";
 import { TRPCError } from "@trpc/server";
 import { DateTime } from "luxon";
-import { userRepository } from "@/server/api/common/repositories/user.repository";
-import { type GroupInvite } from "@/server/api/routers/groups/group-invites/group-invites.types";
+import { userRepository } from "@/server/api/routers/user/repository/user.repository";
+import {
+  type AddMemberToGroupAndRemovePendingInviteArgs,
+  type AddPendingInviteArgs,
+  type CheckPendingInviteExistenceArgs,
+  type DeletePendingInviteArgs,
+  type GroupInvite,
+} from "@/server/api/routers/groups/sub-routers/group-invites/repository/group-invites.repository.types";
 
 class GroupInvitesRepository {
   private readonly logger = new Logger(GroupInvitesRepository.name);
@@ -12,11 +18,7 @@ class GroupInvitesRepository {
     groupId,
     inviteeEmail,
     expirationTime,
-  }: {
-    groupId: string;
-    inviteeEmail: string;
-    expirationTime: Date;
-  }): Promise<number> {
+  }: AddPendingInviteArgs): Promise<boolean> {
     try {
       const existingInvite = await db
         .selectFrom("group_invites")
@@ -34,7 +36,7 @@ class GroupInvitesRepository {
             expiration_time: expirationTime,
           })
           .executeTakeFirst()
-          .then(() => 1);
+          .then((res) => Number(res.numInsertedOrUpdatedRows) > 0);
       }
 
       const currentTime = DateTime.now().toUTC();
@@ -55,7 +57,7 @@ class GroupInvitesRepository {
           and([eb("group_id", "=", groupId), eb("invitee_email", "=", inviteeEmail)])
         )
         .executeTakeFirst()
-        .then(() => 1);
+        .then((res) => Number(res.numUpdatedRows) > 0);
     } catch (error) {
       if (error instanceof TRPCError) throw error;
       this.logger.error(error);
@@ -66,26 +68,25 @@ class GroupInvitesRepository {
     }
   }
 
-  public async deletePendingInvite(groupId: string, inviteeEmail: string): Promise<number> {
+  public async deletePendingInvite(args: DeletePendingInviteArgs): Promise<boolean> {
     return db
       .deleteFrom("group_invites")
       .where(({ eb, and }) =>
-        and([eb("group_id", "=", groupId), eb("invitee_email", "=", inviteeEmail)])
+        and([eb("group_id", "=", args.groupId), eb("invitee_email", "=", args.inviteeEmail)])
       )
       .executeTakeFirst()
-      .then((result) => Number(result.numDeletedRows));
+      .then((result) => Number(result.numDeletedRows) > 0);
   }
 
   public async checkPendingInviteExistence(
-    groupId: string,
-    inviteeEmail: string
+    args: CheckPendingInviteExistenceArgs
   ): Promise<boolean> {
     const invite = await db
       .selectFrom("group_invites")
       .where(({ eb, and }) =>
         and([
-          eb("group_id", "=", groupId),
-          eb("invitee_email", "=", inviteeEmail),
+          eb("group_id", "=", args.groupId),
+          eb("invitee_email", "=", args.inviteeEmail),
           eb("expiration_time", ">", DateTime.now().toUTC().toJSDate()),
         ])
       )
@@ -150,11 +151,7 @@ class GroupInvitesRepository {
     groupId,
     userIdToAdd,
     inviteeEmail,
-  }: {
-    groupId: string;
-    userIdToAdd: string;
-    inviteeEmail: string;
-  }): Promise<void> {
+  }: AddMemberToGroupAndRemovePendingInviteArgs): Promise<void> {
     await db.transaction().execute(async (trx) => {
       const group = await trx
         .selectFrom("groups")

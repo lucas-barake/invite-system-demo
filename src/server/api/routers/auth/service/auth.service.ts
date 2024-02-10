@@ -1,10 +1,18 @@
 import { admin } from "@/server/firebase-admin";
 import { TRPCError } from "@trpc/server";
-import { type User, userRepository } from "@/server/api/common/repositories/user.repository";
+import { userRepository } from "@/server/api/routers/user/repository/user.repository";
 import { redis } from "@/server/redis";
 import argon2 from "argon2";
 import { createSecureCookie, deleteCookie } from "@/server/api/common/utils/cookie-management";
 import { type MeQueryResult, type Session } from "@/server/api/routers/auth/auth.types";
+import {
+  type AddUserSessionArgs,
+  type DeleteSessionTokenArgs,
+  type LogoutArgs,
+  type ValidateSessionTokenArgs,
+  type ValidateSessionTokenResult,
+} from "@/server/api/routers/auth/service/auth.service.types";
+import { type User } from "@/server/api/routers/user/repository/user.repository.types";
 
 export const SESSION_TOKEN_COOKIE_KEY = "x-session-token";
 export const USER_ID_COOKIE_KEY = "x-user-id";
@@ -19,18 +27,14 @@ class AuthService {
     return `${SESSION_TOKENS_PREFIX}${userId}`;
   }
 
-  private async addUserSession(
-    userId: User["id"],
-    sessionToken: string,
-    expiresIn: number
-  ): Promise<void> {
-    const sessionKey = this.getSessionTokensKey(userId);
-    const score = Math.floor(Date.now() / 1000) + expiresIn; // Current time + expiration time in seconds
+  private async addUserSession(args: AddUserSessionArgs): Promise<void> {
+    const sessionKey = this.getSessionTokensKey(args.userId);
+    const score = Math.floor(Date.now() / 1000) + args.expiresIn; // Current time + expiration time in seconds
 
     const pipeline = redis.multi();
-    pipeline.zadd(sessionKey, score.toString(), sessionToken);
+    pipeline.zadd(sessionKey, score.toString(), args.sessionToken);
     pipeline.zcount(sessionKey, "-inf", "+inf");
-    pipeline.expire(sessionKey, expiresIn);
+    pipeline.expire(sessionKey, args.expiresIn);
 
     const results = await pipeline.exec();
     const sessionTokensCount = results?.[1]?.[1];
@@ -55,10 +59,7 @@ class AuthService {
     await pipeline.exec();
   }
 
-  private async deleteSessionToken(args: {
-    userId: User["id"];
-    sessionToken: string;
-  }): Promise<void> {
+  private async deleteSessionToken(args: DeleteSessionTokenArgs): Promise<void> {
     const sessionKey = this.getSessionTokensKey(args.userId);
     await redis.zrem(sessionKey, args.sessionToken);
   }
@@ -115,7 +116,11 @@ class AuthService {
 
       const expiresIn = 60 * 60 * 24 * 5; // 5 days in seconds
       const sessionToken = await this.generateSessionToken(userInfo.id);
-      await this.addUserSession(userInfo.id, sessionToken, expiresIn);
+      await this.addUserSession({
+        userId: userInfo.id,
+        sessionToken,
+        expiresIn,
+      });
 
       createSecureCookie({
         headers,
@@ -150,7 +155,7 @@ class AuthService {
     }
   }
 
-  public async logout(args: { session: Session; headers: Headers }): Promise<void> {
+  public async logout(args: LogoutArgs): Promise<void> {
     await this.deleteSessionToken({
       userId: args.session.user.id,
       sessionToken: args.session.sessionToken,
@@ -167,19 +172,9 @@ class AuthService {
     });
   }
 
-  public async validateSessionToken(args: {
-    encodedSessionToken: string;
-    userId: User["id"];
-  }): Promise<
-    | {
-        success: true;
-        userInfo: Session["user"] | null;
-        sessionToken: string;
-      }
-    | {
-        success: false;
-      }
-  > {
+  public async validateSessionToken(
+    args: ValidateSessionTokenArgs
+  ): Promise<ValidateSessionTokenResult> {
     const decodedSessionToken = decodeURIComponent(args.encodedSessionToken);
     const isSessionTokenValid = await this.checkSessionTokenValidity(
       args.userId,

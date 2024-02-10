@@ -4,7 +4,7 @@ import { useSession } from "@/lib/stores/session-store";
 import {
   sendPhoneOtpInput,
   type SendPhoneOtpInput,
-} from "@/server/api/routers/user/phone/phone.input";
+} from "@/server/api/routers/user/sub-routers/phone/phone.input";
 import { countriesWithCodes } from "@/app/_lib/components/header/user-dropdown-menu/settings-modal/update-phone-modal/countries-with-code";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";

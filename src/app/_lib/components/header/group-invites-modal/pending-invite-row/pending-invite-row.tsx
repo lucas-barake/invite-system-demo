@@ -3,7 +3,7 @@ import { CheckIcon, XIcon } from "lucide-react";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import { handleToastError } from "@/components/ui/toaster";
-import { type GroupInvite } from "@/server/api/routers/groups/group-invites/group-invites.types";
+import { type GroupInvite } from "@/server/api/routers/groups/sub-routers/group-invites/repository/group-invites.repository.types";
 
 type Props = {
   pendingInvite: GroupInvite;

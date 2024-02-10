@@ -1,13 +1,17 @@
 import { db } from "@/server/database";
 import { redis } from "@/server/redis";
-import { type Session } from "@/server/api/routers/auth/auth.types";
 import { DateTime } from "luxon";
 import { PostgresError } from "@/server/api/common/enums/postgres-error.enum";
 import { DatabaseError } from "pg";
 import { TRPCError } from "@trpc/server";
 import { Logger } from "@/server/api/common/logger";
-
-export type User = Pick<Session["user"], "id" | "name" | "email" | "imageUrl">;
+import {
+  type GetUserByIdOptions,
+  type UpdateUserPhoneNumParams,
+  type UpsertUserParams,
+  type User,
+} from "@/server/api/routers/user/repository/user.repository.types";
+import { type Session } from "@/server/api/routers/auth/service/auth.service.types";
 
 class UserRepository {
   private readonly logger = new Logger(UserRepository.name);
@@ -16,8 +20,8 @@ class UserRepository {
     return `user-info:${userId}`;
   }
 
-  private async cacheUserInfo(userId: User["id"], user: User): Promise<void> {
-    const userKey = this.getUserInfoKey(userId);
+  private async cacheUserInfo(user: Session["user"]): Promise<void> {
+    const userKey = this.getUserInfoKey(user.id);
     await redis.set(
       userKey,
       JSON.stringify(user),
@@ -26,15 +30,15 @@ class UserRepository {
     );
   }
 
-  private async getCachedUserInfo(id: Session["user"]["id"]): Promise<Session["user"] | null> {
-    const userKey = this.getUserInfoKey(id);
+  private async getCachedUserInfo(userId: Session["user"]["id"]): Promise<Session["user"] | null> {
+    const userKey = this.getUserInfoKey(userId);
     const cachedUserInfo = await redis.get(userKey);
     return cachedUserInfo !== null ? (JSON.parse(cachedUserInfo) as Session["user"]) : null;
   }
 
   public async getUserById<T extends boolean = false>(
     id: User["id"],
-    options?: { includeSensitiveInfo?: T; bypassCache?: boolean }
+    options?: GetUserByIdOptions<T>
   ): Promise<(T extends true ? Session["user"] : User) | null> {
     const { includeSensitiveInfo = false, bypassCache = false } = options ?? {};
 
@@ -63,15 +67,27 @@ class UserRepository {
       .executeTakeFirst();
 
     if (userQuery !== undefined) {
-      void this.cacheUserInfo(userQuery.id, userQuery);
+      void this.cacheUserInfo(userQuery);
     }
     return userQuery ?? null;
   }
 
-  public async upsertUser(data: {
-    onCreate: Pick<User, "name" | "imageUrl" | "email">;
-    onUpdate: Pick<User, "name" | "imageUrl">;
-  }): Promise<Session["user"] | null> {
+  public getUserByIdOrThrow<T extends boolean = false>(
+    id: User["id"],
+    options?: GetUserByIdOptions<T>
+  ): Promise<T extends true ? Session["user"] : User> {
+    return this.getUserById(id, options).then((user) => {
+      if (user === null) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
+      }
+      return user;
+    });
+  }
+
+  public async upsertUser(data: UpsertUserParams): Promise<Session["user"] | null> {
     const result = await db
       .insertInto("users")
       .values({
@@ -90,24 +106,21 @@ class UserRepository {
       .executeTakeFirst();
 
     if (result !== undefined) {
-      void this.cacheUserInfo(result.id, result);
+      void this.cacheUserInfo(result);
     }
 
     return result ?? null;
   }
 
-  public async updateUserPhoneNumber(
-    userId: string,
-    phoneNumber: string
-  ): Promise<Session["user"]> {
+  public async updateUserPhoneNumber(args: UpdateUserPhoneNumParams): Promise<Session["user"]> {
     try {
       await db
         .updateTable("users")
         .set({
-          phoneNumber,
+          phoneNumber: args.phoneNumber,
           phoneVerified: DateTime.now().toUTC().toISO(),
         })
-        .where("id", "=", userId)
+        .where("id", "=", args.userId)
         .execute();
     } catch (error) {
       if (error instanceof DatabaseError && error.code === PostgresError.UNIQUE_VIOLATION) {
@@ -123,7 +136,7 @@ class UserRepository {
       });
     }
 
-    const updatedUser = await this.getUserById(userId, {
+    const updatedUser = await this.getUserById(args.userId, {
       includeSensitiveInfo: true,
       bypassCache: true,
     });
@@ -134,7 +147,7 @@ class UserRepository {
       });
     }
 
-    await this.cacheUserInfo(userId, updatedUser);
+    await this.cacheUserInfo(updatedUser);
     return updatedUser;
   }
 }

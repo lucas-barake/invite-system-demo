@@ -1,19 +1,25 @@
-import { type CreateGroupInputType } from "@/server/api/routers/groups/groups.input";
-import { type Group } from "@/server/api/routers/groups/groups.types";
 import { db } from "@/server/database";
 import { TRPCError } from "@trpc/server";
 import { Logger } from "@/server/api/common/logger";
 import { DateTime } from "luxon";
+import {
+  type CheckGroupExistenceArgs,
+  type CheckGroupMemberExistenceArgs,
+  type CreateGroupArgs,
+  type DeleteGroupArgs,
+  type Group,
+  type UndoDeleteGroupArgs,
+} from "@/server/api/routers/groups/repository/groups.repository.types";
 
 class GroupsRepository {
   private readonly logger = new Logger(GroupsRepository.name);
 
-  public async createGroup(input: CreateGroupInputType & { ownerId: string }): Promise<Group> {
+  public async createGroup(args: CreateGroupArgs): Promise<Group> {
     const group = await db
       .insertInto("groups")
       .values({
-        title: input.title,
-        owner_id: input.ownerId,
+        title: args.input.title,
+        owner_id: args.ownerId,
         updated_at: new Date(),
       })
       .returning(["created_at", "id", "title", "updated_at", "owner_id"])
@@ -29,7 +35,7 @@ class GroupsRepository {
 
     const owner = await db
       .selectFrom("users")
-      .where("id", "=", input.ownerId)
+      .where("id", "=", args.ownerId)
       .select(["email", "name", "imageUrl", "id"])
       .executeTakeFirst();
 
@@ -53,25 +59,29 @@ class GroupsRepository {
     };
   }
 
-  public async deleteGroup(groupId: string, ownerId: string): Promise<boolean> {
+  public async deleteGroup(args: DeleteGroupArgs): Promise<boolean> {
     return db
       .updateTable("groups")
       .where(({ eb, and }) =>
-        and([eb("id", "=", groupId), eb("owner_id", "=", ownerId), eb("deleted_at", "is", null)])
+        and([
+          eb("id", "=", args.groupId),
+          eb("owner_id", "=", args.ownerId),
+          eb("deleted_at", "is", null),
+        ])
       )
       .set({ deleted_at: DateTime.now().toUTC().toISO() })
       .executeTakeFirst()
-      .then((data) => Number(data.numUpdatedRows) === 1);
+      .then((data) => Number(data.numUpdatedRows) > 0);
   }
 
-  public async undoDeleteGroup(groupId: string, ownerId: string): Promise<boolean> {
+  public async undoDeleteGroup(args: UndoDeleteGroupArgs): Promise<boolean> {
     const sevenDaysAgo = DateTime.now().minus({ days: 7 }).toUTC().toJSDate();
     return db
       .updateTable("groups")
       .where(({ eb, and }) =>
         and([
-          eb("id", "=", groupId),
-          eb("owner_id", "=", ownerId),
+          eb("id", "=", args.groupId),
+          eb("owner_id", "=", args.ownerId),
           eb("deleted_at", ">=", sevenDaysAgo),
         ])
       )
@@ -150,27 +160,21 @@ class GroupsRepository {
     return Array.from(groupsMap.values());
   }
 
-  public async checkGroupExistence(groupId: string, ownerId: string): Promise<boolean> {
+  public async checkGroupExistence(args: CheckGroupExistenceArgs): Promise<boolean> {
     const group = await db
       .selectFrom("groups")
-      .where(({ eb, and }) => and([eb("id", "=", groupId), eb("owner_id", "=", ownerId)]))
+      .where(({ eb, and }) => and([eb("id", "=", args.groupId), eb("owner_id", "=", args.ownerId)]))
       .select(["id"])
       .executeTakeFirst();
     return group !== undefined;
   }
 
-  public async checkGroupMemberExistence({
-    groupId,
-    userEmail,
-  }: {
-    groupId: string;
-    userEmail: string;
-  }): Promise<boolean> {
+  public async checkGroupMemberExistence(args: CheckGroupMemberExistenceArgs): Promise<boolean> {
     const member = await db
       .selectFrom("group_members")
       .leftJoin("users", "users.id", "group_members.user_id")
       .where(({ eb, and }) =>
-        and([eb("group_id", "=", groupId), eb("users.email", "=", userEmail)])
+        and([eb("group_id", "=", args.groupId), eb("users.email", "=", args.userEmail)])
       )
       .select("group_members.user_id")
       .executeTakeFirst();

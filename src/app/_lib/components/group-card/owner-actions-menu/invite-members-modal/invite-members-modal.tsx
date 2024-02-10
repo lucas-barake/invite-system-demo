@@ -5,7 +5,6 @@ import { Dialog } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "@/lib/stores/session-store";
-import { type Group } from "@/server/api/routers/groups/groups.types";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { api } from "@/trpc/react";
@@ -17,9 +16,10 @@ import { handleToastError } from "@/components/ui/toaster";
 import {
   SendGroupInviteInput,
   type SendGroupInviteInputType,
-} from "@/server/api/routers/groups/group-invites/group-invites.input";
+} from "@/server/api/routers/groups/sub-routers/group-invites/group-invites.input";
 import { PendingInvitee } from "@/app/_lib/components/group-card/owner-actions-menu/invite-members-modal/pending-invitee";
 import { FieldError } from "@/components/ui/field-error";
+import { type Group } from "@/server/api/routers/groups/repository/groups.repository.types";
 
 type Props = {
   open: boolean;

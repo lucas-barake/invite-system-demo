@@ -1,13 +1,15 @@
 import { TimeInSeconds } from "@/server/api/common/enums/time-in-seconds.enum";
 import { Logger } from "@/server/api/common/logger";
-import { userRepository } from "@/server/api/common/repositories/user.repository";
-import { type Session } from "@/server/api/routers/auth/auth.types";
-import {
-  type SendPhoneOtpInput,
-  type VerifyPhoneInput,
-} from "@/server/api/routers/user/phone/phone.input";
+import { userRepository } from "@/server/api/routers/user/repository/user.repository";
+import { type SendPhoneOtpInput } from "@/server/api/routers/user/sub-routers/phone/phone.input";
 import { redis } from "@/server/redis";
 import { TRPCError } from "@trpc/server";
+import { type Session } from "@/server/api/routers/auth/service/auth.service.types";
+import {
+  type GetOtpTtlArgs,
+  type SendOtpArgs,
+  type VerifyOtpArgs,
+} from "@/server/api/routers/user/sub-routers/phone/service/phone.service.types";
 
 class PhoneService {
   private readonly logger = new Logger(PhoneService.name);
@@ -19,8 +21,8 @@ class PhoneService {
     return `phone-otp:${phone.countryCode}:${phone.phoneNumber}:${userId}`;
   }
 
-  public async sendOtp(input: SendPhoneOtpInput, session: Session): Promise<void> {
-    const redisKey = this.getPhoneOtpRedisKey(input.phone, session.user.id);
+  public async sendOtp(args: SendOtpArgs): Promise<void> {
+    const redisKey = this.getPhoneOtpRedisKey(args.input.phone, args.session.user.id);
     const exists = (await redis.exists(redisKey)) === 1;
     if (exists) {
       throw new TRPCError({
@@ -49,12 +51,12 @@ class PhoneService {
     */
 
     this.logger.debug(
-      `Phone OTP for ${input.phone.countryCode}${input.phone.phoneNumber}: ${fourDigitOtp}`
+      `Phone OTP for ${args.input.phone.countryCode}${args.input.phone.phoneNumber}: ${fourDigitOtp}`
     );
   }
 
-  public async verifyOtp(input: VerifyPhoneInput, session: Session): Promise<Session["user"]> {
-    const redisKey = this.getPhoneOtpRedisKey(input.phone, session.user.id);
+  public async verifyOtp(args: VerifyOtpArgs): Promise<Session["user"]> {
+    const redisKey = this.getPhoneOtpRedisKey(args.input.phone, args.session.user.id);
     const otpFromRedis = await redis.get(redisKey);
     if (otpFromRedis === null) {
       throw new TRPCError({
@@ -63,26 +65,26 @@ class PhoneService {
       });
     }
 
-    if (input.otp !== otpFromRedis) {
+    if (args.input.otp !== otpFromRedis) {
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: "Invalid OTP provided",
       });
     }
 
-    const newUserInfo = await userRepository.updateUserPhoneNumber(
-      session.user.id,
-      input.phone.phoneNumber
-    );
+    const newUserInfo = await userRepository.updateUserPhoneNumber({
+      userId: args.session.user.id,
+      phoneNumber: args.input.phone.phoneNumber,
+    });
     void redis.del(redisKey);
     this.logger.debug(
-      `Phone number ${input.phone.countryCode}${input.phone.phoneNumber} verified successfully.`
+      `Phone number ${args.input.phone.countryCode}${args.input.phone.phoneNumber} verified successfully.`
     );
     return newUserInfo;
   }
 
-  public async getOtpTtl(input: SendPhoneOtpInput, session: Session): Promise<number> {
-    const redisKey = this.getPhoneOtpRedisKey(input.phone, session.user.id);
+  public async getOtpTtl(args: GetOtpTtlArgs): Promise<number> {
+    const redisKey = this.getPhoneOtpRedisKey(args.input.phone, args.session.user.id);
     const ttl = await redis.ttl(redisKey);
     if (ttl === -2) {
       throw new TRPCError({
@@ -92,7 +94,7 @@ class PhoneService {
     }
     if (ttl === -1) {
       this.logger.error(
-        `Phone OTP for ${input.phone.countryCode}${input.phone.phoneNumber} does not have an expiration`
+        `Phone OTP for ${args.input.phone.countryCode}${args.input.phone.phoneNumber} does not have an expiration`
       );
       throw new TRPCError({
         code: "BAD_REQUEST",

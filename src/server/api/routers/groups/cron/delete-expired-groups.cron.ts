@@ -1,7 +1,7 @@
 import { db } from "@/server/database";
 import { sql } from "kysely";
 
-export async function deleteGroupsCronJob(): Promise<number | undefined> {
+export async function deleteExpiredGroups(): Promise<number | undefined> {
   const result = await sql`
     DELETE FROM "groups" USING (
       SELECT

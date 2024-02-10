@@ -1,7 +1,7 @@
 import { createTRPCRouter } from "@/server/api/trpc";
 import { authRouter } from "@/server/api/routers/auth/auth.router";
 import { groupsRouter } from "@/server/api/routers/groups/groups.router";
-import { groupInvitesRouter } from "@/server/api/routers/groups/group-invites/group-invites.router";
+import { groupInvitesRouter } from "@/server/api/routers/groups/sub-routers/group-invites/group-invites.router";
 import { userRouter } from "@/server/api/routers/user/user.router";
 
 /**

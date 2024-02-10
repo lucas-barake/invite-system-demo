@@ -1,6 +1,6 @@
 import { redis } from "@/server/redis";
 import { TRPCError } from "@trpc/server";
-import { type Session } from "@/server/api/routers/auth/auth.types";
+import { type Session } from "@/server/api/routers/auth/service/auth.service.types";
 
 type WindowType = "seconds" | "minutes" | "hours" | "days" | "weeks";
 export type RateLimitConfig = {
@@ -28,7 +28,7 @@ function convertToSeconds(amount: number, type: WindowType): number {
   }
 }
 
-export async function rateLimit(session: Session, args: RateLimitConfig): Promise<void> {
+export async function rateLimitMiddleware(session: Session, args: RateLimitConfig): Promise<void> {
   if (args.enabled === false) {
     return;
   }

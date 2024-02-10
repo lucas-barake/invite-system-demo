@@ -1,6 +1,6 @@
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
 import { z } from "zod";
-import { authService } from "@/server/api/routers/auth/auth.service";
+import { authService } from "@/server/api/routers/auth/service/auth.service";
 import { TRPCError } from "@trpc/server";
 import { Logger } from "@/server/api/common/logger";
 import { type MeQueryResult } from "@/server/api/routers/auth/auth.types";

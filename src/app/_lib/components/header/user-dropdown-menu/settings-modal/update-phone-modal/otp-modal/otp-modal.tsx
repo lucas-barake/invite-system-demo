@@ -3,7 +3,7 @@ import { Controller, useForm } from "react-hook-form";
 import {
   verifyPhoneInput,
   type VerifyPhoneInput,
-} from "@/server/api/routers/user/phone/phone.input";
+} from "@/server/api/routers/user/sub-routers/phone/phone.input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTimer } from "react-timer-hook";
 import { DateTime, Duration } from "luxon";
