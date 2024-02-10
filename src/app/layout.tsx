@@ -9,7 +9,7 @@ import { UserStoreInitializer } from "@/app/_lib/components/user-store-initializ
 import { AuthGuard } from "@/app/_lib/components/auth-guard";
 import { cn } from "@/lib/cn";
 import { Toaster } from "@/components/ui/toaster";
-import { type User } from "@/server/api/routers/user/repository/user.repository.types";
+import { type MeQueryResult } from "@/server/api/routers/auth/auth.types";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -26,7 +26,7 @@ type Props = {
   children: React.ReactNode;
 };
 
-async function getMe(): Promise<User | null> {
+async function getMe(): Promise<MeQueryResult | null> {
   try {
     return await api.auth.me.query();
   } catch {
