@@ -1,0 +1,17 @@
+name: Delete Expired Groups CRON Job
+
+on:
+  schedule:
+    - cron: "0 */12 * * *" # Runs every 12 hours
+
+jobs:
+  trigger_delete_expired_groups:
+    runs-on: ubuntu-latest
+    container: alpine/curl
+    steps:
+      - name: Trigger Delete Expired Groups CRON Job
+        run: |
+          curl -X POST ${{ secrets.DELETE_EXPIRED_GROUPS_URL }} \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer ${{ secrets.SCHEDULER_AUTH_TOKEN }}" \
+          -d '{}'

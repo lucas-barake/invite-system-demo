@@ -19,11 +19,3 @@ export async function deleteExpiredGroups(): Promise<number | undefined> {
 
   return Number(result.numAffectedRows);
 }
-
-// const cronExpressionEveryTwelveHours = "0 */12 * * * ";
-/* 
-cron.schedule(cronExpressionEveryTwelveHours, async () => {
-  logger.info("Running deleteGroups CRON job");
-  await deleteGroupsCronJob();
-});
-*/
