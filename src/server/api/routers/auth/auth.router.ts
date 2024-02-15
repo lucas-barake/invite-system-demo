@@ -36,4 +36,16 @@ export const authRouter = createTRPCRouter({
       });
     }
   }),
+
+  logoutAllSessions: protectedProcedure.mutation(async ({ ctx }) => {
+    try {
+      await authService.removeAllSessions({ headers: ctx.headers, userId: ctx.session.user.id });
+    } catch (error: unknown) {
+      Logger.error("Failed to logout all sessions", error);
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to logout all sessions",
+      });
+    }
+  }),
 });

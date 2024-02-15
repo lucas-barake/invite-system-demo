@@ -6,6 +6,7 @@ import { UpdatePhoneModal } from "src/app/_lib/components/header/user-dropdown-m
 import { Edit, PlusIcon } from "lucide-react";
 import { parsePhoneNumber } from "libphonenumber-js/min";
 import { Badge } from "@/components/ui/badge";
+import { api } from "@/trpc/react";
 
 type Props = {
   open: boolean;
@@ -14,6 +15,11 @@ type Props = {
 
 export const SettingsModal: React.FC<Props> = ({ open, onOpenChange }) => {
   const session = useSession();
+  const logoutAllSessionsMutation = api.auth.logoutAllSessions.useMutation({
+    onSuccess() {
+      window.location.reload();
+    },
+  });
   const hasPhoneNumber =
     session.data?.user.phoneNumber !== undefined && session.data?.user.phoneNumber !== null;
   const [showPhoneModal, setShowPhoneModal] = React.useState(false);
@@ -91,6 +97,21 @@ export const SettingsModal: React.FC<Props> = ({ open, onOpenChange }) => {
                 )}
               </Button>
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-semibold">Security</span>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                logoutAllSessionsMutation.mutate();
+              }}
+              className="self-start"
+            >
+              Logout all sessions
+            </Button>
           </div>
 
           <Dialog.Footer>

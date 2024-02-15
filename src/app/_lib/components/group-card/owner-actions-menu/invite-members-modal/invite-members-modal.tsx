@@ -39,7 +39,7 @@ export const InviteMembersModal: React.FC<Props> = ({ open, onOpenChange, group 
       staleTime: 1000 * 60 * 5,
     }
   );
-  const sendInviteMutation = api.groupInvites.sendGroupInvite.useMutation({
+  const sendInviteMutation = api.groups.invites.sendGroupInvite.useMutation({
     onSuccess() {
       void apiUtils.groupInvites.getPendingInvitesForGroup.invalidate({
         groupId: group.id,

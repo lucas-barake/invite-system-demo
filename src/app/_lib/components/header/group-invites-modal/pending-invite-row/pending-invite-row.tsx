@@ -11,7 +11,7 @@ type Props = {
 
 export const PendingInviteRow: React.FC<Props> = ({ pendingInvite }) => {
   const apiUtils = api.useUtils();
-  const acceptInvite = api.groupInvites.acceptGroupInvite.useMutation({
+  const acceptInvite = api.groups.invites.acceptGroupInvite.useMutation({
     onSuccess() {
       void apiUtils.groups.getAllGroups.invalidate();
       apiUtils.groupInvites.getPendingInvitesForUser.setData(undefined, (cachedData) => {
@@ -20,7 +20,7 @@ export const PendingInviteRow: React.FC<Props> = ({ pendingInvite }) => {
       });
     },
   });
-  const declineInvite = api.groupInvites.declineGroupInvite.useMutation({
+  const declineInvite = api.groups.invites.declineGroupInvite.useMutation({
     onSuccess() {
       apiUtils.groupInvites.getPendingInvitesForUser.setData(undefined, (cachedData) => {
         if (cachedData === undefined) return [];

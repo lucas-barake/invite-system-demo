@@ -33,6 +33,7 @@ export type LogoutArgs = {
 export type ValidateSessionTokenArgs = {
   encodedSessionToken: string;
   userId: User["id"];
+  headers: Headers;
 };
 export type ValidateSessionTokenResult =
   | {
@@ -43,3 +44,8 @@ export type ValidateSessionTokenResult =
   | {
       success: false;
     };
+
+export type LogoutAllSessionsArgs = {
+  headers: Headers;
+  userId: User["id"];
+};

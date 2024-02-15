@@ -4,15 +4,18 @@ import { userRepository } from "@/server/api/routers/user/repository/user.reposi
 import { redis } from "@/server/redis";
 import argon2 from "argon2";
 import { createSecureCookie, deleteCookie } from "@/server/api/common/utils/cookie-management";
-import { type MeQueryResult, type Session } from "@/server/api/routers/auth/auth.types";
+import { type MeQueryResult } from "@/server/api/routers/auth/auth.types";
 import {
+  type Session,
   type AddUserSessionArgs,
   type DeleteSessionTokenArgs,
   type LogoutArgs,
   type ValidateSessionTokenArgs,
   type ValidateSessionTokenResult,
+  type LogoutAllSessionsArgs,
 } from "@/server/api/routers/auth/service/auth.service.types";
 import { type User } from "@/server/api/routers/user/repository/user.repository.types";
+import { TimeInSeconds } from "@/server/api/common/enums/time-in-seconds.enum";
 
 export const SESSION_TOKEN_COOKIE_KEY = "x-session-token";
 export const USER_ID_COOKIE_KEY = "x-user-id";
@@ -79,6 +82,35 @@ class AuthService {
     return false;
   }
 
+  private async isTokenAboutToExpire(
+    userId: string,
+    decodedSessionToken: string
+  ): Promise<boolean> {
+    const sessionKey = this.getSessionTokensKey(userId);
+    const score = await redis.zscore(sessionKey, decodedSessionToken);
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    return score !== null && parseInt(score, 10) - currentTimestamp < TimeInSeconds.OneWeek;
+  }
+
+  private async renewSessionTokenAndCookies(userId: string, headers: Headers): Promise<string> {
+    const expiresIn = 60 * 60 * 24 * 5; // Renew for another 5 days
+    const newSessionToken = await this.generateSessionToken(userId);
+    await this.addUserSession({
+      userId,
+      sessionToken: newSessionToken,
+      expiresIn,
+    });
+
+    createSecureCookie({
+      headers,
+      expiresInSeconds: expiresIn,
+      name: SESSION_TOKEN_COOKIE_KEY,
+      value: encodeURIComponent(newSessionToken),
+    });
+
+    return newSessionToken;
+  }
+
   private async generateSessionToken(userId: Session["user"]["id"]): Promise<string> {
     const rawToken = `${userId}-${Date.now()}-${Math.random()}`;
     const hashedToken = await argon2.hash(rawToken);
@@ -114,7 +146,7 @@ class AuthService {
         });
       }
 
-      const expiresIn = 60 * 60 * 24 * 5; // 5 days in seconds
+      const expiresIn = TimeInSeconds.TwoWeeks;
       const sessionToken = await this.generateSessionToken(userInfo.id);
       await this.addUserSession({
         userId: userInfo.id,
@@ -187,13 +219,33 @@ class AuthService {
       };
     }
 
+    let finalSessionToken = decodedSessionToken;
+    if (await this.isTokenAboutToExpire(args.userId, decodedSessionToken)) {
+      finalSessionToken = await this.renewSessionTokenAndCookies(args.userId, args.headers);
+    }
+
     return {
       success: true,
       userInfo: await userRepository.getUserById(args.userId, {
         includeSensitiveInfo: true,
       }),
-      sessionToken: decodedSessionToken,
+      sessionToken: finalSessionToken,
     };
+  }
+
+  public async removeAllSessions(args: LogoutAllSessionsArgs): Promise<void> {
+    const sessionKey = this.getSessionTokensKey(args.userId);
+    await redis.del(sessionKey);
+
+    deleteCookie({
+      name: SESSION_TOKEN_COOKIE_KEY,
+      headers: args.headers,
+    });
+
+    deleteCookie({
+      name: USER_ID_COOKIE_KEY,
+      headers: args.headers,
+    });
   }
 }
 

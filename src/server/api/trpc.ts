@@ -16,11 +16,11 @@ import {
   SESSION_TOKEN_COOKIE_KEY,
   USER_ID_COOKIE_KEY,
 } from "@/server/api/routers/auth/service/auth.service";
-import { type Session } from "@/server/api/routers/auth/auth.types";
 import {
   type RateLimitConfig,
   rateLimitMiddleware,
 } from "@/server/api/common/middlewares/rate-limit.middleware";
+import { type Session } from "@/server/api/routers/auth/service/auth.service.types";
 
 /**
  * 1. CONTEXT
@@ -101,6 +101,7 @@ const enforceUserIsAuthenticated = t.middleware(async (opts) => {
     const result = await authService.validateSessionToken({
       encodedSessionToken,
       userId,
+      headers: opts.ctx.headers,
     });
 
     if (!result.success) {
