@@ -12,6 +12,7 @@ services:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
+
   redis:
     container_name: invite-system-redis
     image: redis
@@ -19,5 +20,39 @@ services:
     ports:
       - "6379:6379"
 
+  prometheus:
+    container_name: invite-system-prometheus
+    image: prom/prometheus:latest
+    restart: no
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+
+  grafana:
+    container_name: invite-system-grafana
+    image: grafana/grafana:latest
+    restart: no
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+
+  tempo:
+    container_name: invite-system-tempo
+    image: grafana/tempo:latest
+    restart: no
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml
+      - ./tempo-data:/tmp/tempo
+    ports:
+      - "3200:3200" # tempo
+      - "4318:4318" # otlp http
+
 volumes:
   db-data:
+  grafana-data:
+  tempo-data:

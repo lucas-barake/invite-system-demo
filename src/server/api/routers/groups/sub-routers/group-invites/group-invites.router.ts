@@ -6,6 +6,8 @@ import {
   SendGroupInviteInput,
 } from "@/server/api/routers/groups/sub-routers/group-invites/group-invites.input";
 import { type GetPendingInvitesForUserResult } from "@/server/api/routers/groups/sub-routers/group-invites/group-invites.types";
+import { Effect, pipe } from "effect";
+import { ServerRuntime, GroupInvitesService, SessionContext } from "@/server/api/layers";
 
 export const groupInvitesRouter = createTRPCRouter({
   sendGroupInvite: protectedProcedure.input(SendGroupInviteInput).mutation(({ input, ctx }) => {
@@ -16,10 +18,11 @@ export const groupInvitesRouter = createTRPCRouter({
   }),
 
   acceptGroupInvite: protectedProcedure.input(AcceptGroupInviteInput).mutation(({ input, ctx }) => {
-    return groupInvitesService.acceptGroupInvite({
-      input,
-      session: ctx.session,
-    });
+    return pipe(
+      Effect.flatMap(GroupInvitesService, (service) => service.acceptGroupInvite(input)),
+      Effect.provideService(SessionContext, ctx.session),
+      ServerRuntime.runPromise
+    );
   }),
 
   declineGroupInvite: protectedProcedure
